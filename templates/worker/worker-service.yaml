@@ -1,24 +1,26 @@
+{{- if and .Values.worker.enabled .Values.worker.service.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "trigger-dev.app.name" . }}
+  name: {{ include "trigger-dev.worker.name" . }}
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
     {{- include "trigger-dev.labels" . | nindent 4 }}
-    app.kubernetes.io/component: app
-  {{- with .Values.app.service.annotations }}
+    app.kubernetes.io/component: worker
+  {{- with .Values.worker.service.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  {{- if .Values.app.service.type }}
-  type: {{ .Values.app.service.type }}
+  {{- if .Values.worker.service.type }}
+  type: {{ .Values.worker.service.type }}
   {{- end }}
   ports:
-    - port: {{ .Values.app.service.port }}
+    - port: {{ .Values.worker.service.port }}
       targetPort: http
       protocol: TCP
       name: http
   selector:
     {{- include "trigger-dev.selectorLabels" . | nindent 4 }}
-    app.kubernetes.io/component: app 
+    app.kubernetes.io/component: worker
+{{- end }} 

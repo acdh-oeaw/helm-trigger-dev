@@ -127,9 +127,9 @@ The application can be accessed via the ingress at:
 {{- else }}
 The application can be accessed via port-forwarding:
 
-  kubectl port-forward svc/{{ include "trigger-dev.app.name" . }} {{ .Values.service.port }}:{{ .Values.service.port }}
+  kubectl port-forward svc/{{ include "trigger-dev.app.name" . }} {{ .Values.app.service.port }}:{{ .Values.app.service.port }}
 
-Then access: http://localhost:{{ .Values.service.port }}
+Then access: http://localhost:{{ .Values.app.service.port }}
 {{- end }}
 
 {{ if .Values.supervisor.enabled }}
@@ -162,16 +162,16 @@ To check the logs of the supervisor:
   http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
   {{- end }}
 {{- end }}
-{{- else if contains "NodePort" .Values.service.type }}
+{{- else if contains "NodePort" .Values.app.service.type }}
   export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "trigger-dev.app.name" . }})
   export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
   echo http://$NODE_IP:$NODE_PORT
-{{- else if contains "LoadBalancer" .Values.service.type }}
+{{- else if contains "LoadBalancer" .Values.app.service.type }}
   NOTE: It may take a few minutes for the LoadBalancer IP to be available.
         You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "trigger-dev.app.name" . }}'
   export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "trigger-dev.app.name" . }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
-  echo http://$SERVICE_IP:{{ .Values.service.port }}
-{{- else if contains "ClusterIP" .Values.service.type }}
+  echo http://$SERVICE_IP:{{ .Values.app.service.port }}
+{{- else if contains "ClusterIP" .Values.app.service.type }}
   export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "trigger-dev.name" . }},app.kubernetes.io/instance={{ .Release.Name }},app.kubernetes.io/component=app" -o jsonpath="{.items[0].metadata.name}")
   export CONTAINER_PORT=$(kubectl get pod --namespace {{ .Release.Namespace }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
   echo "Visit http://127.0.0.1:8080 to use your application"

@@ -45,7 +45,7 @@ spec:
         - name: NODE_ENV
           value: {{ .Values.app.nodeEnv | quote }}
         - name: TRIGGER_API_URL
-          value: "http://{{ include "trigger-dev.app.name" . }}:{{ .Values.service.port }}"
+          value: "http://{{ include "trigger-dev.app.name" . }}:{{ .Values.app.service.port }}"
         - name: TRIGGER_WORKLOAD_API_ENABLED
           value: "false"
         - name: TRIGGER_DEQUEUE_ENABLED
@@ -74,7 +74,7 @@ spec:
         {{- end }}
         ports:
         - name: http
-          containerPort: {{ .Values.service.port }}
+          containerPort: {{ .Values.app.service.port }}
           protocol: TCP
         {{- with .Values.app.startupProbe }}
         startupProbe: {{- toYaml . | nindent 10 }}
@@ -95,24 +95,4 @@ spec:
       {{- with .Values.app.tolerations }}
       tolerations: {{- toYaml . | nindent 8 }}
       {{- end }}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ include "trigger-dev.app.name" . }}
-  namespace: {{ .Values.namespace | default .Release.Namespace }}
-  labels: {{- include "trigger-dev.labels" . | nindent 4 }}
-    app.kubernetes.io/component: app
-  {{- with .Values.app.service.annotations }}
-  annotations: {{- toYaml . | nindent 4 }}
-  {{- end }}
-spec:
-  type: {{ .Values.app.service.type }}
-  ports:
-  - port: {{ .Values.service.port }}
-    targetPort: http
-    protocol: TCP
-    name: http
-  selector: {{- include "trigger-dev.selectorLabels" . | nindent 4 }}
-    app.kubernetes.io/component: app
 {{- end }}

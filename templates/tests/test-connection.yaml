@@ -11,5 +11,5 @@ spec:
     - name: wget
       image: busybox
       command: ['wget']
-      args: ['{{ include "trigger-dev.app.name" . }}:{{ .Values.service.port }}/health']
+      args: ['{{ include "trigger-dev.app.name" . }}:{{ .Values.app.service.port }}/health']
   restartPolicy: Never 

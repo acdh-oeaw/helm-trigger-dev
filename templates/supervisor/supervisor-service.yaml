@@ -8,7 +8,9 @@ metadata:
     {{- include "trigger-dev.labels" . | nindent 4 }}
     app.kubernetes.io/component: supervisor
 spec:
+  {{- if .Values.supervisor.service.type }}
   type: {{ .Values.supervisor.service.type }}
+  {{- end }}
   ports:
     - port: {{ .Values.supervisor.service.port }}
       targetPort: http

@@ -9,7 +9,7 @@
 
 # Namespace configuration
 namespace: "trigger-dev"
-createNamespace: false  # Set to true to automatically create namespace
+createNamespace: true  # Set to true to automatically create namespace
 
 # Quick start mode configuration
 quickstart:
@@ -100,15 +100,15 @@ resources:
       memory: 256Mi
   dbMigration:
     requests:
-      cpu: 100m
-      memory: 256Mi
+      cpu: 50m
+      memory: 128Mi
 
 # =============================================================================
 # Component Configuration
 # Settings specific to each component
 # =============================================================================
 
-# Application Component
+# App component configuration
 app:
   enabled: true
   replicas: 1  # Set higher for production
@@ -157,141 +157,17 @@ app:
     successThreshold: 1
     failureThreshold: 3
 
-# Worker Component
-worker:
-  enabled: true
-  replicas: 1
-  nodeEnv: "production"
-  # ... [similar structure to app component]
-
-# Supervisor Component
-supervisor:
-  enabled: true
-  replicas: 1
-  mode: coordinator  # Options: coordinator, provider, both
-  nodeEnv: "production"
-  # ... [similar structure to app component]
-
-# =============================================================================
-# External Dependencies
-# Configuration for required external services
-# =============================================================================
-
-# Database Configuration
-database:
-  # Connection details
-  externalHost: your-neon-db-host.neon.tech
-  externalPort: 5432
-  externalDatabase: postgres
-  externalUser: postgres
-  externalPassword: postgres  # Use secrets in production
-  
-  # Connection options
-  sslMode: require
-  poolMin: 0
-  poolMax: 10
-  connectionTimeout: 60
-  statementTimeout: 30000
-  idleTimeout: 10000
-  usePgBouncer: false
-  
-  # Production recommended:
-  # connectionStringSecret: "trigger-db-secret"
-
-# Redis Configuration
-redis:
-  url: redis://username:password@host:port
-  tls: false
-  connectTimeout: 5000
-  # Production recommended:
-  # secretName: "trigger-redis-secret"
-
-# =============================================================================
-# Production Features
-# Settings typically used in production environments
-# =============================================================================
-
-# Network Policies
-networkPolicy:
-  enabled: false  # Enable in production
-
-# Autoscaling
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 3
-  targetCPUUtilizationPercentage: 80
-
-# Pod Disruption Budget
-podDisruptionBudget:
-  enabled: false
-  # minAvailable: 1
-
-# Priority Class
-priorityClassName: ""
-
-# Topology Spread Constraints
-topologySpreadConstraints: []
-
-# Secret Rotation
-secretRotation:
-  enabled: false
-  documentation: "Use external secret management in production"
-
-# App component configuration
-app:
-  enabled: true
-  replicas: 1
-  service:
-    enabled: true
-    type: ClusterIP
-    port: 3000
-    annotations: {}
-  podLabels: {}
-  podAnnotations: {}
-  nodeSelector: {}
-  tolerations: []
-  affinity: {}
   # Additional environment variables for app deployment
   env: {}
-  # Node environment setting
-  nodeEnv: "production"
   # Support for init containers
   initContainers: []
-  # Example init container:
-  # - name: init-check-dependencies
-  #   image: busybox
-  #   command: ['sh', '-c', 'until nslookup myservice; do echo waiting for myservice; sleep 2; done;']
-  startupProbe:
-    httpGet:
-      path: /health
-      port: http
-    initialDelaySeconds: 20
-    periodSeconds: 10
-    timeoutSeconds: 5
-    successThreshold: 1
-    failureThreshold: 6
-  livenessProbe:
-    httpGet:
-      path: /health
-      port: http
-    periodSeconds: 10
-    timeoutSeconds: 5
-    successThreshold: 1
-    failureThreshold: 3
-  readinessProbe:
-    httpGet:
-      path: /health
-      port: http
-    periodSeconds: 10
-    timeoutSeconds: 5
-    successThreshold: 1
-    failureThreshold: 3
 
 # Worker component configuration
 worker:
   enabled: true
   replicas: 1
+  nodeEnv: "production"
+  # Image configuration
   image:
     repository: ghcr.io/triggerdotdev/trigger.dev
     tag: "3.3.18"
@@ -304,8 +180,6 @@ worker:
   affinity: {}
   # Additional environment variables for worker deployment
   env: {}
-  # Node environment setting
-  nodeEnv: "production"
   # Enable service for worker component
   service:
     enabled: false
@@ -323,7 +197,6 @@ worker:
     timeoutSeconds: 5
     successThreshold: 1
     failureThreshold: 6
-  # Added missing probes for worker
   livenessProbe:
     httpGet:
       path: /health
@@ -391,14 +264,92 @@ supervisor:
     port: 8020
     annotations: {}
 
-# Service configuration for the application
-service:
-  type: ClusterIP
-  port: 3000
-  annotations: {}
-  labels: {}
+# =============================================================================
+# External Dependencies
+# Configuration for required external services
+# =============================================================================
 
-# Ingress configuration
+# Database Configuration
+database:
+  # Connection details
+  externalHost: your-neon-db-host.neon.tech
+  externalPort: 5432
+  externalDatabase: postgres
+  externalUser: postgres
+  externalPassword: postgres  # Use secrets in production
+  
+  # Connection options
+  sslMode: require
+  poolMin: 0
+  poolMax: 10
+  connectionTimeout: 60
+  statementTimeout: 30000
+  idleTimeout: 10000
+  usePgBouncer: false
+  
+  # Production recommended:
+  # connectionStringSecret: "trigger-db-secret"
+
+# Redis Configuration
+redis:
+  url: redis://username:password@host:port
+  tls: false
+  connectTimeout: 5000
+  # Production recommended:
+  # secretName: "trigger-redis-secret"
+
+# =============================================================================
+# Production Features
+# Settings typically used in production environments
+# =============================================================================
+
+# Network Policies
+networkPolicy:
+  enabled: false  # Enable in production
+
+# Autoscaling
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+  # For production, enable and configure based on expected load
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: false
+  # For production with multiple replicas, enable and set minAvailable or maxUnavailable
+  # minAvailable: 1
+  # maxUnavailable: 1
+
+# Priority Class
+# Set this to ensure pods get appropriate scheduling priority
+priorityClassName: ""
+# For production: Create a priority class and reference it here
+
+# Topology Spread Constraints
+# Helps distribute pods across failure domains (nodes, zones)
+topologySpreadConstraints: []
+# For production:
+# - maxSkew: 1
+#   topologyKey: topology.kubernetes.io/zone
+#   whenUnsatisfiable: DoNotSchedule
+#   labelSelector:
+#     matchLabels:
+#       app.kubernetes.io/name: trigger-dev
+
+# Secret rotation
+secretRotation:
+  enabled: false
+  # For production environments, consider implementing a proper secret rotation mechanism
+  # This section serves as a reminder and placeholder for implementation
+  documentation: "For production environments, use external secret management solutions like Vault or Kubernetes External Secrets"
+
+# =============================================================================
+# Ingress Configuration
+# =============================================================================
+
 ingress:
   enabled: false
   className: ""
@@ -420,8 +371,10 @@ ingress:
   #   hosts:
   #     - trigger.example.com
 
+# =============================================================================
 # RBAC Configuration
-# Enable RBAC for Kubernetes provider to create and manage task pods
+# =============================================================================
+
 rbac:
   create: true
   # Rules with minimal permissions required for the Kubernetes provider
@@ -433,13 +386,19 @@ rbac:
       resources: ["jobs"]
       verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 
+# =============================================================================
 # Service Account Configuration
+# =============================================================================
+
 serviceAccount:
   create: true
   name: ""
   annotations: {}
 
-# Database migration job configuration
+# =============================================================================
+# Database Migration Configuration
+# =============================================================================
+
 dbMigration:
   enabled: true
   # Maximum retries for the migration job
@@ -463,43 +422,4 @@ dbMigration:
   # Affinity for the migration job
   affinity: {}
   # Init containers for the migration job
-  initContainers: []
-
-# Horizontal Pod Autoscaler configuration
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 3
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
-  # For production, enable and configure based on expected load
-
-# Pod Disruption Budget configuration
-podDisruptionBudget:
-  enabled: false
-  # For production with multiple replicas, enable and set minAvailable or maxUnavailable
-  # minAvailable: 1
-  # maxUnavailable: 1
-
-# Priority Class
-# Set this to ensure pods get appropriate scheduling priority
-priorityClassName: ""
-# For production: Create a priority class and reference it here
-
-# Topology Spread Constraints
-# Helps distribute pods across failure domains (nodes, zones)
-topologySpreadConstraints: []
-# For production:
-# - maxSkew: 1
-#   topologyKey: topology.kubernetes.io/zone
-#   whenUnsatisfiable: DoNotSchedule
-#   labelSelector:
-#     matchLabels:
-#       app.kubernetes.io/name: trigger-dev 
-
-# Secret rotation
-secretRotation:
-  enabled: false
-  # For production environments, consider implementing a proper secret rotation mechanism
-  # This section serves as a reminder and placeholder for implementation
-  documentation: "For production environments, use external secret management solutions like Vault or Kubernetes External Secrets" 
+  initContainers: [] 

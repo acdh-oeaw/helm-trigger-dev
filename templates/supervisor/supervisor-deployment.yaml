@@ -60,7 +60,7 @@ spec:
             - name: SUPERVISOR_MODE
               value: {{ .Values.supervisor.mode | quote }}
             - name: TRIGGER_API_URL
-              value: "http://{{ include "trigger-dev.app.name" . }}:{{ .Values.service.port }}"
+              value: "http://{{ include "trigger-dev.app.name" . }}:{{ .Values.app.service.port }}"
             - name: KUBERNETES_FORCE_ENABLED
               value: "true"
             - name: KUBERNETES_NAMESPACE
@@ -109,27 +109,4 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ include "trigger-dev.supervisor.name" . }}
-  namespace: {{ .Values.namespace | default .Release.Namespace }}
-  labels:
-    {{- include "trigger-dev.labels" . | nindent 4 }}
-    app.kubernetes.io/component: supervisor
-  {{- with .Values.supervisor.service.annotations }}
-  annotations:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-spec:
-  type: {{ .Values.supervisor.service.type }}
-  ports:
-    - port: {{ .Values.supervisor.service.port }}
-      targetPort: http
-      protocol: TCP
-      name: http
-  selector:
-    {{- include "trigger-dev.selectorLabels" . | nindent 4 }}
-    app.kubernetes.io/component: supervisor
 {{- end }}

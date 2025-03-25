@@ -1,0 +1,13 @@
+# Database configuration
+database:
+  # Option 1: Use connection string secret (recommended for production)
+  connectionStringSecret: "trigger-db-secret"  # Name of the secret containing DATABASE_URL
+  
+  # Option 2: Direct connection details (alternative)
+  externalHost: "your-actual-host"  # Replace with your database host
+  externalPort: 5432               # Replace with your database port
+  externalDatabase: "postgres"      # Replace with your database name
+  externalUser: "postgres"         # Replace with your database user
+  externalPassword: "postgres"     # Replace with your database password
+
+# Other settings remain at default values 

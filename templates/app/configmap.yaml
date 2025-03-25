@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels: {{- include "trigger-dev.labels" . | nindent 4 }}
     app.kubernetes.io/component: app
-data:
+stringData:
   NODE_ENV: {{ .Values.app.nodeEnv | quote }}
   TRIGGER_WORKLOAD_API_ENABLED: "false"
   TRIGGER_DEQUEUE_ENABLED: "false"

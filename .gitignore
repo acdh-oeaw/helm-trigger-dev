@@ -1,0 +1,20 @@
+# Helm chart specific
+*.tgz
+.helm/
+.DS_Store
+
+# Local values files with sensitive data
+my-values.yaml
+*-values.yaml
+!values.yaml
+!values-production.yaml
+
+# IDE specific
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS specific
+.DS_Store
+Thumbs.db 
