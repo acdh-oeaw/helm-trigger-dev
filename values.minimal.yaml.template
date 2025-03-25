@@ -6,6 +6,17 @@
 # namespace: "trigger-dev"  # [DEFAULT: Release.Namespace]
 # createNamespace: false    # [DEFAULT: false]
 
+# Quickstart mode for development
+quickstart:
+  enabled: true
+
+# Secrets configuration (used when quickstart.enabled is true)
+secrets:
+  magicLinkSecret: "test-magic-link-secret"
+  encryptionKey: "test-encryption-key"
+  workerToken: "test-worker-token"
+  managedWorkerSecret: "test-managed-worker-secret"
+
 # Image Settings
 image:
   repository: ghcr.io/triggerdotdev/trigger.dev
@@ -65,19 +76,19 @@ redis:
 app:
   enabled: true
   replicas: 1
+  nodeEnv: "production"
   service:
     port: 3000
     # type: ClusterIP     # [DEFAULT: ClusterIP]
-  # nodeEnv: "production" # [DEFAULT: production]
 
 # Basic worker configuration
 worker:
   enabled: true
   replicas: 1
+  nodeEnv: "production"
   service:
     port: 3000
     type: ClusterIP
-  # nodeEnv: "production" # [DEFAULT: production]
 
 # Basic supervisor configuration
 supervisor:

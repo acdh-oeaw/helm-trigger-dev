@@ -1,21 +1,10 @@
 extends: default
 
 rules:
-  # Disable rules that conflict with Helm template syntax
+  line-length:
+    max: 120
+    level: warning
   indentation: disable
-  line-length: disable
-  new-line-at-end-of-file: disable
   trailing-spaces: disable
-  key-duplicates: disable
   document-start: disable
-  document-end: disable
   empty-lines: disable
-  
-  # Enable rules that are safe for Helm templates
-  colons: enable
-  commas: enable
-  dashes: enable
-  key-ordering: enable
-  new-lines: enable
-  spaces: enable
-  truthy: enable 

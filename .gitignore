@@ -4,9 +4,11 @@
 .DS_Store
 
 # Local values files with sensitive data
+rendered.yaml
 values.yaml
+values.yml
 values-*.yaml
-!values.yaml
+values-*.yml
 !values.*.yaml.template
 
 # IDE specific ignores

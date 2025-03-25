@@ -16,9 +16,9 @@ metadata:
     {{- end }}
 spec:
   backoffLimit: {{ .Values.dbMigration.backoffLimit }}
-{{- if .Values.dbMigration.ttlSecondsAfterFinished }}
+  {{- if .Values.dbMigration.ttlSecondsAfterFinished }}
   ttlSecondsAfterFinished: {{ .Values.dbMigration.ttlSecondsAfterFinished }}
-{{- end }}
+  {{- end }}
   activeDeadlineSeconds: {{ .Values.dbMigration.timeout }}
   template:
     metadata:
@@ -40,7 +40,6 @@ spec:
       serviceAccountName: {{ include "trigger-dev.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      # Add init container to wait for database to be available
       initContainers:
         - name: wait-for-database
           image: postgres:14-alpine
@@ -50,10 +49,9 @@ spec:
             - |
               echo "Waiting for database connection..."
               {{- if .Values.database.connectionStringSecret }}
-              # Extract host and port from connection URL
               DATABASE_URL=$(cat /mnt/db-secret/DATABASE_URL)
-              DB_HOST=$(echo $DATABASE_URL | sed -e 's/^.*@\([^:]*\):.*/\1/')
-              DB_PORT=$(echo $DATABASE_URL | sed -e 's/^.*:\([0-9]*\)\/.*/\1/')
+              DB_HOST=$(echo $DATABASE_URL | sed -e "s/^.*@\([^:]*\):.*/\1/")
+              DB_PORT=$(echo $DATABASE_URL | sed -e "s/^.*:\([0-9]*\)\/.*/\1/")
               {{- else }}
               DB_HOST={{ .Values.database.externalHost }}
               DB_PORT={{ .Values.database.externalPort }}
@@ -73,16 +71,16 @@ spec:
               mountPath: /mnt/db-secret
               readOnly: true
           {{- end }}
-        {{- if .Values.dbMigration.initContainers }}
+      {{- if .Values.dbMigration.initContainers }}
         {{- toYaml .Values.dbMigration.initContainers | nindent 8 }}
-        {{- end }}
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}-db-migrate
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default (printf "v%s" .Chart.Version) }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: 
+          command:
             - sh
             - -c
             - |

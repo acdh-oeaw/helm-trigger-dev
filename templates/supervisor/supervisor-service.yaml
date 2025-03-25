@@ -19,4 +19,4 @@ spec:
   selector:
     {{- include "trigger-dev.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: supervisor
-{{- end }} 
+{{- end }}

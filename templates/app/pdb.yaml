@@ -16,4 +16,4 @@ spec:
   selector:
     matchLabels:
       {{- include "trigger-dev.selectorLabels" . | nindent 6 }}
-{{- end }} 
+{{- end }}

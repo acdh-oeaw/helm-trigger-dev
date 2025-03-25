@@ -61,7 +61,7 @@ jobs:
 
       - name: Run yamllint on rendered templates
         run: |
-          helm template . | yamllint -d relaxed -
+          helm template . | yamllint -c .yamllint -
 
       - name: Validate template rendering
         run: |

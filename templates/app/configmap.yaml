@@ -4,10 +4,11 @@ kind: ConfigMap
 metadata:
   name: {{ include "trigger-dev.app.name" . }}-config
   namespace: {{ .Values.namespace | default .Release.Namespace }}
-  labels: {{- include "trigger-dev.labels" . | nindent 4 }}
+  labels:
+    {{- include "trigger-dev.labels" . | nindent 4 }}
     app.kubernetes.io/component: app
-stringData:
-  NODE_ENV: {{ .Values.app.nodeEnv | quote }}
+data:
+  NODE_ENV: {{ .Values.app.nodeEnv | default "production" | quote }}
   TRIGGER_WORKLOAD_API_ENABLED: "false"
   TRIGGER_DEQUEUE_ENABLED: "false"
   KUBERNETES_FORCE_ENABLED: "true"
@@ -19,4 +20,4 @@ stringData:
   REDIS_CONNECTION_RETRY_DELAY_MS: "2000"
   HEALTH_CHECK_INTERVAL_MS: "10000"
   HEALTH_CHECK_TIMEOUT_MS: "5000"
-{{- end }} 
+{{- end }}

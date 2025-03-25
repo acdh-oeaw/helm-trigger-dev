@@ -11,7 +11,18 @@ metadata:
     "helm.sh/hook-weight": "-10"
     "trigger.dev/description": "Provides permissions for Trigger.dev to create and manage task runner pods"
 rules:
-  {{- toYaml .Values.rbac.rules | nindent 2 }}
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods/status"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -30,4 +41,4 @@ subjects:
   - kind: ServiceAccount
     name: {{ include "trigger-dev.serviceAccountName" . }}
     namespace: {{ .Values.namespace | default .Release.Namespace }}
-{{- end }} 
+{{- end }}

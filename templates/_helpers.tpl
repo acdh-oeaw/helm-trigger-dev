@@ -2,6 +2,14 @@
 Default values for worker and service configuration
 */}}
 {{- define "trigger-dev.defaultValues" -}}
+{{/* Name defaults */}}
+{{- if not .Values.nameOverride -}}
+{{- $_ := set .Values "nameOverride" "trigger-dev" -}}
+{{- end -}}
+{{- if not .Values.fullnameOverride -}}
+{{- $_ := set .Values "fullnameOverride" "trigger-dev" -}}
+{{- end -}}
+
 {{/* Ingress defaults */}}
 {{- if not .Values.ingress -}}
 {{- $_ := set .Values "ingress" dict -}}
@@ -233,65 +241,32 @@ Default values for worker and service configuration
 {{- if not .Values.supervisor.enabled -}}
 {{- $_ := set .Values.supervisor "enabled" false -}}
 {{- end -}}
-{{- if not .Values.supervisor.mode -}}
-{{- $_ := set .Values.supervisor "mode" "both" -}}
-{{- end -}}
 {{- if not .Values.supervisor.replicas -}}
 {{- $_ := set .Values.supervisor "replicas" 1 -}}
 {{- end -}}
-{{- if not .Values.supervisor.image -}}
-{{- $_ := set .Values.supervisor "image" dict -}}
-{{- end -}}
-{{- if not .Values.supervisor.image.pullPolicy -}}
-{{- $_ := set .Values.supervisor.image "pullPolicy" "IfNotPresent" -}}
+{{- if not .Values.supervisor.mode -}}
+{{- $_ := set .Values.supervisor "mode" "both" -}}
 {{- end -}}
 {{- if not .Values.supervisor.nodeEnv -}}
 {{- $_ := set .Values.supervisor "nodeEnv" "production" -}}
 {{- end -}}
-{{- if not .Values.supervisor.startupProbe -}}
-{{- $_ := set .Values.supervisor "startupProbe" dict -}}
+{{- if not .Values.supervisor.service -}}
+{{- $_ := set .Values.supervisor "service" dict -}}
 {{- end -}}
-{{- if not .Values.supervisor.startupProbe.periodSeconds -}}
-{{- $_ := set .Values.supervisor.startupProbe "periodSeconds" 10 -}}
+{{- if not .Values.supervisor.service.type -}}
+{{- $_ := set .Values.supervisor.service "type" "ClusterIP" -}}
 {{- end -}}
-{{- if not .Values.supervisor.startupProbe.timeoutSeconds -}}
-{{- $_ := set .Values.supervisor.startupProbe "timeoutSeconds" 5 -}}
+{{- if not .Values.supervisor.service.port -}}
+{{- $_ := set .Values.supervisor.service "port" 8020 -}}
 {{- end -}}
-{{- if not .Values.supervisor.startupProbe.successThreshold -}}
-{{- $_ := set .Values.supervisor.startupProbe "successThreshold" 1 -}}
+{{- if not .Values.supervisor.env -}}
+{{- $_ := set .Values.supervisor "env" dict -}}
 {{- end -}}
-{{- if not .Values.supervisor.startupProbe.failureThreshold -}}
-{{- $_ := set .Values.supervisor.startupProbe "failureThreshold" 30 -}}
+{{- if not .Values.supervisor.podLabels -}}
+{{- $_ := set .Values.supervisor "podLabels" dict -}}
 {{- end -}}
-{{- if not .Values.supervisor.livenessProbe -}}
-{{- $_ := set .Values.supervisor "livenessProbe" dict -}}
-{{- end -}}
-{{- if not .Values.supervisor.livenessProbe.periodSeconds -}}
-{{- $_ := set .Values.supervisor.livenessProbe "periodSeconds" 30 -}}
-{{- end -}}
-{{- if not .Values.supervisor.livenessProbe.timeoutSeconds -}}
-{{- $_ := set .Values.supervisor.livenessProbe "timeoutSeconds" 5 -}}
-{{- end -}}
-{{- if not .Values.supervisor.livenessProbe.successThreshold -}}
-{{- $_ := set .Values.supervisor.livenessProbe "successThreshold" 1 -}}
-{{- end -}}
-{{- if not .Values.supervisor.livenessProbe.failureThreshold -}}
-{{- $_ := set .Values.supervisor.livenessProbe "failureThreshold" 3 -}}
-{{- end -}}
-{{- if not .Values.supervisor.readinessProbe -}}
-{{- $_ := set .Values.supervisor "readinessProbe" dict -}}
-{{- end -}}
-{{- if not .Values.supervisor.readinessProbe.periodSeconds -}}
-{{- $_ := set .Values.supervisor.readinessProbe "periodSeconds" 10 -}}
-{{- end -}}
-{{- if not .Values.supervisor.readinessProbe.timeoutSeconds -}}
-{{- $_ := set .Values.supervisor.readinessProbe "timeoutSeconds" 5 -}}
-{{- end -}}
-{{- if not .Values.supervisor.readinessProbe.successThreshold -}}
-{{- $_ := set .Values.supervisor.readinessProbe "successThreshold" 1 -}}
-{{- end -}}
-{{- if not .Values.supervisor.readinessProbe.failureThreshold -}}
-{{- $_ := set .Values.supervisor.readinessProbe "failureThreshold" 3 -}}
+{{- if not .Values.supervisor.podAnnotations -}}
+{{- $_ := set .Values.supervisor "podAnnotations" dict -}}
 {{- end -}}
 
 {{/* Supervisor image defaults */}}
@@ -754,8 +729,6 @@ Expand the name of the chart.
 
 {{/*
 Create a default fully qualified app name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-If release name contains chart name it will be used as a full name.
 */}}
 {{- define "trigger-dev.fullname" -}}
 {{- if .Values.fullnameOverride }}
@@ -771,7 +744,7 @@ If release name contains chart name it will be used as a full name.
 {{- end }}
 
 {{/*
-Create chart name and version as used by the chart label.
+Create chart name and version as used by the chart label
 */}}
 {{- define "trigger-dev.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
@@ -783,8 +756,8 @@ Common labels
 {{- define "trigger-dev.labels" -}}
 helm.sh/chart: {{ include "trigger-dev.chart" . }}
 {{ include "trigger-dev.selectorLabels" . }}
-{{- if .Chart.Version }}
-app.kubernetes.io/version: {{ .Chart.Version | quote }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
@@ -802,31 +775,31 @@ Create the name of the service account to use
 */}}
 {{- define "trigger-dev.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "trigger-dev.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "trigger-dev.fullname" .) .Values.serviceAccount.name | trunc 63 | trimSuffix "-" }}
 {{- else }}
-{{- default "default" .Values.serviceAccount.name }}
+{{- default "default" .Values.serviceAccount.name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 {{- end }}
 
 {{/*
-Define app name
+Create the name of the app service
 */}}
 {{- define "trigger-dev.app.name" -}}
-{{- printf "%s-app" (include "trigger-dev.fullname" .) }}
+{{- printf "%s-app" (include "trigger-dev.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
-Define worker name
+Create the name of the worker service
 */}}
 {{- define "trigger-dev.worker.name" -}}
-{{- printf "%s-worker" (include "trigger-dev.fullname" .) }}
+{{- printf "%s-worker" (include "trigger-dev.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
-Define supervisor name
+Create the name of the supervisor service
 */}}
 {{- define "trigger-dev.supervisor.name" -}}
-{{- printf "%s-supervisor" (include "trigger-dev.fullname" .) }}
+{{- printf "%s-supervisor" (include "trigger-dev.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
@@ -1079,5 +1052,38 @@ Validate probe configuration
 {{- $probe := . -}}
 {{- if not (and $probe.periodSeconds $probe.timeoutSeconds $probe.successThreshold $probe.failureThreshold) -}}
 {{- fail "Probe must specify all timing parameters" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Validate required secrets in quickstart mode
+*/}}
+{{- define "trigger-dev.validateSecrets" -}}
+{{- if .Values.quickstart.enabled -}}
+{{- if not .Values.secrets.magicLinkSecret -}}
+{{- fail "A valid magicLinkSecret is required when quickstart.enabled is true" -}}
+{{- end -}}
+{{- if not .Values.secrets.encryptionKey -}}
+{{- fail "A valid encryptionKey is required when quickstart.enabled is true" -}}
+{{- end -}}
+{{- if not .Values.secrets.workerToken -}}
+{{- fail "A valid workerToken is required when quickstart.enabled is true" -}}
+{{- end -}}
+{{- if not .Values.secrets.managedWorkerSecret -}}
+{{- fail "A valid managedWorkerSecret is required when quickstart.enabled is true" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Validate environment variables
+*/}}
+{{- define "trigger-dev.validateEnv" -}}
+{{- if .Values.worker.env -}}
+{{- range $key, $value := .Values.worker.env }}
+{{- if not $value }}
+{{- fail (printf "Environment variable %s cannot be empty" $key) -}}
+{{- end -}}
+{{- end -}}
 {{- end -}}
 {{- end -}} 

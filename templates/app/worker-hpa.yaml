@@ -2,7 +2,7 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "trigger-dev.app.name" . }}
+  name: {{ include "trigger-dev.worker.name" . }}
   namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
     {{- include "trigger-dev.labels" . | nindent 4 }}
@@ -10,9 +10,9 @@ spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "trigger-dev.app.name" . }}
-  minReplicas: {{ .Values.autoscaling.app.minReplicas }}
-  maxReplicas: {{ .Values.autoscaling.app.maxReplicas }}
+    name: {{ include "trigger-dev.worker.name" . }}
+  minReplicas: {{ .Values.autoscaling.worker.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.worker.maxReplicas }}
   metrics:
-    {{- toYaml .Values.autoscaling.app.metrics | nindent 4 }}
-{{- end }}
+    {{- toYaml .Values.autoscaling.worker.metrics | nindent 4 }}
+{{- end }} 
