@@ -23,11 +23,16 @@ redis:
 app:
   enabled: true
   replicas: 1
+  service:
+    port: 3000
 
 # Basic worker configuration
 worker:
   enabled: true
   replicas: 1
+  service:
+    port: 3000
+    type: ClusterIP
 
 # Basic supervisor configuration
 supervisor:

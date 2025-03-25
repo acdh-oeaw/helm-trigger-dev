@@ -1,7 +1,655 @@
 {{/*
+Default values for worker and service configuration
+*/}}
+{{- define "trigger-dev.defaultValues" -}}
+{{/* Ingress defaults */}}
+{{- if not .Values.ingress -}}
+{{- $_ := set .Values "ingress" dict -}}
+{{- end -}}
+{{- if not (hasKey .Values.ingress "enabled") -}}
+{{- $_ := set .Values.ingress "enabled" false -}}
+{{- end -}}
+{{- if not .Values.ingress.className -}}
+{{- $_ := set .Values.ingress "className" "" -}}
+{{- end -}}
+{{- if not .Values.ingress.annotations -}}
+{{- $_ := set .Values.ingress "annotations" dict -}}
+{{- end -}}
+{{- if not .Values.ingress.hosts -}}
+{{- $_ := set .Values.ingress "hosts" list -}}
+{{- end -}}
+{{- if not .Values.ingress.tls -}}
+{{- $_ := set .Values.ingress "tls" list -}}
+{{- end -}}
+
+{{/* Network policy defaults */}}
+{{- if not .Values.networkPolicy -}}
+{{- $_ := set .Values "networkPolicy" dict -}}
+{{- end -}}
+{{- if not (hasKey .Values.networkPolicy "enabled") -}}
+{{- $_ := set .Values.networkPolicy "enabled" true -}}
+{{- end -}}
+
+{{/* Security context defaults */}}
+{{- if not .Values.securityContext -}}
+{{- $_ := set .Values "securityContext" dict -}}
+{{- end -}}
+{{- if not (hasKey .Values.securityContext "capabilities") -}}
+{{- $_ := set .Values.securityContext "capabilities" dict -}}
+{{- end -}}
+{{- if not (hasKey .Values.securityContext.capabilities "drop") -}}
+{{- $_ := set .Values.securityContext.capabilities "drop" (list "ALL") -}}
+{{- end -}}
+{{- if not (hasKey .Values.securityContext "readOnlyRootFilesystem") -}}
+{{- $_ := set .Values.securityContext "readOnlyRootFilesystem" true -}}
+{{- end -}}
+{{- if not (hasKey .Values.securityContext "runAsNonRoot") -}}
+{{- $_ := set .Values.securityContext "runAsNonRoot" true -}}
+{{- end -}}
+{{- if not (hasKey .Values.securityContext "runAsUser") -}}
+{{- $_ := set .Values.securityContext "runAsUser" 1000 -}}
+{{- end -}}
+
+{{/* Pod security context defaults */}}
+{{- if not .Values.podSecurityContext -}}
+{{- $_ := set .Values "podSecurityContext" dict -}}
+{{- end -}}
+{{- if not (hasKey .Values.podSecurityContext "runAsNonRoot") -}}
+{{- $_ := set .Values.podSecurityContext "runAsNonRoot" true -}}
+{{- end -}}
+
+{{/* Pod disruption budget defaults */}}
+{{- if not .Values.podDisruptionBudget -}}
+{{- $_ := set .Values "podDisruptionBudget" dict -}}
+{{- end -}}
+{{- if not (hasKey .Values.podDisruptionBudget "enabled") -}}
+{{- $_ := set .Values.podDisruptionBudget "enabled" true -}}
+{{- end -}}
+
+{{/* App probe defaults */}}
+{{- if not .Values.app -}}
+{{- $_ := set .Values "app" dict -}}
+{{- end -}}
+{{- if not .Values.app.livenessProbe -}}
+{{- $_ := set .Values.app "livenessProbe" dict -}}
+{{- end -}}
+{{- if not .Values.app.livenessProbe.periodSeconds -}}
+{{- $_ := set .Values.app.livenessProbe "periodSeconds" 30 -}}
+{{- end -}}
+{{- if not .Values.app.livenessProbe.timeoutSeconds -}}
+{{- $_ := set .Values.app.livenessProbe "timeoutSeconds" 5 -}}
+{{- end -}}
+{{- if not .Values.app.livenessProbe.successThreshold -}}
+{{- $_ := set .Values.app.livenessProbe "successThreshold" 1 -}}
+{{- end -}}
+{{- if not .Values.app.livenessProbe.failureThreshold -}}
+{{- $_ := set .Values.app.livenessProbe "failureThreshold" 3 -}}
+{{- end -}}
+{{- if not .Values.app.readinessProbe -}}
+{{- $_ := set .Values.app "readinessProbe" dict -}}
+{{- end -}}
+{{- if not .Values.app.readinessProbe.periodSeconds -}}
+{{- $_ := set .Values.app.readinessProbe "periodSeconds" 10 -}}
+{{- end -}}
+{{- if not .Values.app.readinessProbe.timeoutSeconds -}}
+{{- $_ := set .Values.app.readinessProbe "timeoutSeconds" 5 -}}
+{{- end -}}
+{{- if not .Values.app.readinessProbe.successThreshold -}}
+{{- $_ := set .Values.app.readinessProbe "successThreshold" 1 -}}
+{{- end -}}
+{{- if not .Values.app.readinessProbe.failureThreshold -}}
+{{- $_ := set .Values.app.readinessProbe "failureThreshold" 3 -}}
+{{- end -}}
+
+{{/* Worker probe defaults */}}
+{{- if not .Values.worker -}}
+{{- $_ := set .Values "worker" dict -}}
+{{- end -}}
+{{- if not .Values.worker.livenessProbe -}}
+{{- $_ := set .Values.worker "livenessProbe" dict -}}
+{{- end -}}
+{{- if not .Values.worker.livenessProbe.periodSeconds -}}
+{{- $_ := set .Values.worker.livenessProbe "periodSeconds" 30 -}}
+{{- end -}}
+{{- if not .Values.worker.livenessProbe.timeoutSeconds -}}
+{{- $_ := set .Values.worker.livenessProbe "timeoutSeconds" 5 -}}
+{{- end -}}
+{{- if not .Values.worker.livenessProbe.successThreshold -}}
+{{- $_ := set .Values.worker.livenessProbe "successThreshold" 1 -}}
+{{- end -}}
+{{- if not .Values.worker.livenessProbe.failureThreshold -}}
+{{- $_ := set .Values.worker.livenessProbe "failureThreshold" 3 -}}
+{{- end -}}
+{{- if not .Values.worker.readinessProbe -}}
+{{- $_ := set .Values.worker "readinessProbe" dict -}}
+{{- end -}}
+{{- if not .Values.worker.readinessProbe.periodSeconds -}}
+{{- $_ := set .Values.worker.readinessProbe "periodSeconds" 10 -}}
+{{- end -}}
+{{- if not .Values.worker.readinessProbe.timeoutSeconds -}}
+{{- $_ := set .Values.worker.readinessProbe "timeoutSeconds" 5 -}}
+{{- end -}}
+{{- if not .Values.worker.readinessProbe.successThreshold -}}
+{{- $_ := set .Values.worker.readinessProbe "successThreshold" 1 -}}
+{{- end -}}
+{{- if not .Values.worker.readinessProbe.failureThreshold -}}
+{{- $_ := set .Values.worker.readinessProbe "failureThreshold" 3 -}}
+{{- end -}}
+
+{{/* RBAC defaults */}}
+{{- if not .Values.rbac -}}
+{{- $_ := set .Values "rbac" dict -}}
+{{- end -}}
+{{- if not (hasKey .Values.rbac "create") -}}
+{{- $_ := set .Values.rbac "create" true -}}
+{{- end -}}
+
+{{/* Service account defaults */}}
+{{- if not .Values.serviceAccount -}}
+{{- $_ := set .Values "serviceAccount" dict -}}
+{{- end -}}
+{{- if not (hasKey .Values.serviceAccount "create") -}}
+{{- $_ := set .Values.serviceAccount "create" true -}}
+{{- end -}}
+{{- if not .Values.serviceAccount.name -}}
+{{- $_ := set .Values.serviceAccount "name" "" -}}
+{{- end -}}
+
+{{/* Image defaults */}}
+{{- if not .Values.image -}}
+{{- $_ := set .Values "image" dict -}}
+{{- end -}}
+{{- if not .Values.image.repository -}}
+{{- $_ := set .Values.image "repository" "ghcr.io/triggerdotdev/trigger.dev" -}}
+{{- end -}}
+{{- if not .Values.image.tag -}}
+{{- $_ := set .Values.image "tag" "latest" -}}
+{{- end -}}
+{{- if not .Values.image.pullPolicy -}}
+{{- $_ := set .Values.image "pullPolicy" "IfNotPresent" -}}
+{{- end -}}
+{{- if not .Values.image.digest -}}
+{{- $_ := set .Values.image "digest" "" -}}
+{{- end -}}
+
+{{/* Worker defaults */}}
+{{- if not .Values.worker -}}
+{{- $_ := set .Values "worker" dict -}}
+{{- end -}}
+{{- if not .Values.worker.enabled -}}
+{{- $_ := set .Values.worker "enabled" true -}}
+{{- end -}}
+{{- if not .Values.worker.service -}}
+{{- $_ := set .Values.worker "service" dict -}}
+{{- end -}}
+{{- if not .Values.worker.service.port -}}
+{{- $_ := set .Values.worker.service "port" 3000 -}}
+{{- end -}}
+{{- if not .Values.worker.service.type -}}
+{{- $_ := set .Values.worker.service "type" "ClusterIP" -}}
+{{- end -}}
+
+{{/* Worker image defaults */}}
+{{- if not .Values.worker.image -}}
+{{- $_ := set .Values.worker "image" dict -}}
+{{- end -}}
+{{- if not .Values.worker.image.repository -}}
+{{- $_ := set .Values.worker.image "repository" "ghcr.io/triggerdotdev/trigger.dev" -}}
+{{- end -}}
+{{- if not .Values.worker.image.tag -}}
+{{- $_ := set .Values.worker.image "tag" "latest" -}}
+{{- end -}}
+{{- if not .Values.worker.image.pullPolicy -}}
+{{- $_ := set .Values.worker.image "pullPolicy" "IfNotPresent" -}}
+{{- end -}}
+{{- if not .Values.worker.image.digest -}}
+{{- $_ := set .Values.worker.image "digest" "" -}}
+{{- end -}}
+
+{{/* App defaults */}}
+{{- if not .Values.app -}}
+{{- $_ := set .Values "app" dict -}}
+{{- end -}}
+{{- if not .Values.app.enabled -}}
+{{- $_ := set .Values.app "enabled" true -}}
+{{- end -}}
+{{- if not .Values.app.service -}}
+{{- $_ := set .Values.app "service" dict -}}
+{{- end -}}
+{{- if not .Values.app.service.port -}}
+{{- $_ := set .Values.app.service "port" 3000 -}}
+{{- end -}}
+{{- if not .Values.app.service.type -}}
+{{- $_ := set .Values.app.service "type" "ClusterIP" -}}
+{{- end -}}
+{{- if not .Values.app.replicas -}}
+{{- $_ := set .Values.app "replicas" 1 -}}
+{{- end -}}
+
+{{/* Supervisor defaults */}}
+{{- if not .Values.supervisor -}}
+{{- $_ := set .Values "supervisor" dict -}}
+{{- end -}}
+{{- if not .Values.supervisor.enabled -}}
+{{- $_ := set .Values.supervisor "enabled" false -}}
+{{- end -}}
+{{- if not .Values.supervisor.mode -}}
+{{- $_ := set .Values.supervisor "mode" "both" -}}
+{{- end -}}
+{{- if not .Values.supervisor.replicas -}}
+{{- $_ := set .Values.supervisor "replicas" 1 -}}
+{{- end -}}
+{{- if not .Values.supervisor.image -}}
+{{- $_ := set .Values.supervisor "image" dict -}}
+{{- end -}}
+{{- if not .Values.supervisor.image.pullPolicy -}}
+{{- $_ := set .Values.supervisor.image "pullPolicy" "IfNotPresent" -}}
+{{- end -}}
+{{- if not .Values.supervisor.nodeEnv -}}
+{{- $_ := set .Values.supervisor "nodeEnv" "production" -}}
+{{- end -}}
+{{- if not .Values.supervisor.startupProbe -}}
+{{- $_ := set .Values.supervisor "startupProbe" dict -}}
+{{- end -}}
+{{- if not .Values.supervisor.startupProbe.periodSeconds -}}
+{{- $_ := set .Values.supervisor.startupProbe "periodSeconds" 10 -}}
+{{- end -}}
+{{- if not .Values.supervisor.startupProbe.timeoutSeconds -}}
+{{- $_ := set .Values.supervisor.startupProbe "timeoutSeconds" 5 -}}
+{{- end -}}
+{{- if not .Values.supervisor.startupProbe.successThreshold -}}
+{{- $_ := set .Values.supervisor.startupProbe "successThreshold" 1 -}}
+{{- end -}}
+{{- if not .Values.supervisor.startupProbe.failureThreshold -}}
+{{- $_ := set .Values.supervisor.startupProbe "failureThreshold" 30 -}}
+{{- end -}}
+{{- if not .Values.supervisor.livenessProbe -}}
+{{- $_ := set .Values.supervisor "livenessProbe" dict -}}
+{{- end -}}
+{{- if not .Values.supervisor.livenessProbe.periodSeconds -}}
+{{- $_ := set .Values.supervisor.livenessProbe "periodSeconds" 30 -}}
+{{- end -}}
+{{- if not .Values.supervisor.livenessProbe.timeoutSeconds -}}
+{{- $_ := set .Values.supervisor.livenessProbe "timeoutSeconds" 5 -}}
+{{- end -}}
+{{- if not .Values.supervisor.livenessProbe.successThreshold -}}
+{{- $_ := set .Values.supervisor.livenessProbe "successThreshold" 1 -}}
+{{- end -}}
+{{- if not .Values.supervisor.livenessProbe.failureThreshold -}}
+{{- $_ := set .Values.supervisor.livenessProbe "failureThreshold" 3 -}}
+{{- end -}}
+{{- if not .Values.supervisor.readinessProbe -}}
+{{- $_ := set .Values.supervisor "readinessProbe" dict -}}
+{{- end -}}
+{{- if not .Values.supervisor.readinessProbe.periodSeconds -}}
+{{- $_ := set .Values.supervisor.readinessProbe "periodSeconds" 10 -}}
+{{- end -}}
+{{- if not .Values.supervisor.readinessProbe.timeoutSeconds -}}
+{{- $_ := set .Values.supervisor.readinessProbe "timeoutSeconds" 5 -}}
+{{- end -}}
+{{- if not .Values.supervisor.readinessProbe.successThreshold -}}
+{{- $_ := set .Values.supervisor.readinessProbe "successThreshold" 1 -}}
+{{- end -}}
+{{- if not .Values.supervisor.readinessProbe.failureThreshold -}}
+{{- $_ := set .Values.supervisor.readinessProbe "failureThreshold" 3 -}}
+{{- end -}}
+
+{{/* Supervisor image defaults */}}
+{{- if not .Values.supervisorImage -}}
+{{- $_ := set .Values "supervisorImage" dict -}}
+{{- end -}}
+{{- if not .Values.supervisorImage.repository -}}
+{{- $_ := set .Values.supervisorImage "repository" "ghcr.io/triggerdotdev/supervisor" -}}
+{{- end -}}
+{{- if not .Values.supervisorImage.tag -}}
+{{- $_ := set .Values.supervisorImage "tag" "latest" -}}
+{{- end -}}
+{{- if not .Values.supervisorImage.digest -}}
+{{- $_ := set .Values.supervisorImage "digest" "" -}}
+{{- end -}}
+
+{{/* Coordinator image defaults */}}
+{{- if not .Values.coordinatorImage -}}
+{{- $_ := set .Values "coordinatorImage" dict -}}
+{{- end -}}
+{{- if not .Values.coordinatorImage.repository -}}
+{{- $_ := set .Values.coordinatorImage "repository" "ghcr.io/triggerdotdev/coordinator" -}}
+{{- end -}}
+{{- if not .Values.coordinatorImage.tag -}}
+{{- $_ := set .Values.coordinatorImage "tag" "latest" -}}
+{{- end -}}
+{{- if not .Values.coordinatorImage.digest -}}
+{{- $_ := set .Values.coordinatorImage "digest" "" -}}
+{{- end -}}
+
+{{/* Kubernetes provider image defaults */}}
+{{- if not .Values.kubernetesProviderImage -}}
+{{- $_ := set .Values "kubernetesProviderImage" dict -}}
+{{- end -}}
+{{- if not .Values.kubernetesProviderImage.repository -}}
+{{- $_ := set .Values.kubernetesProviderImage "repository" "ghcr.io/triggerdotdev/provider/kubernetes" -}}
+{{- end -}}
+{{- if not .Values.kubernetesProviderImage.tag -}}
+{{- $_ := set .Values.kubernetesProviderImage "tag" "latest" -}}
+{{- end -}}
+{{- if not .Values.kubernetesProviderImage.digest -}}
+{{- $_ := set .Values.kubernetesProviderImage "digest" "" -}}
+{{- end -}}
+
+{{/* Quickstart defaults */}}
+{{- if not .Values.quickstart -}}
+{{- $_ := set .Values "quickstart" dict -}}
+{{- end -}}
+{{- if not .Values.quickstart.enabled -}}
+{{- $_ := set .Values.quickstart "enabled" true -}}
+{{- end -}}
+
+{{/* Database defaults */}}
+{{- if not .Values.database -}}
+{{- $_ := set .Values "database" dict -}}
+{{- end -}}
+{{- if not .Values.database.externalHost -}}
+{{- $_ := set .Values.database "externalHost" "localhost" -}}
+{{- end -}}
+{{- if not .Values.database.externalPort -}}
+{{- $_ := set .Values.database "externalPort" 5432 -}}
+{{- end -}}
+{{- if not .Values.database.externalDatabase -}}
+{{- $_ := set .Values.database "externalDatabase" "trigger" -}}
+{{- end -}}
+{{- if not .Values.database.externalUser -}}
+{{- $_ := set .Values.database "externalUser" "trigger" -}}
+{{- end -}}
+{{- if not .Values.database.externalPassword -}}
+{{- $_ := set .Values.database "externalPassword" "trigger" -}}
+{{- end -}}
+
+{{/* Database migration defaults */}}
+{{- if not .Values.dbMigration -}}
+{{- $_ := set .Values "dbMigration" dict -}}
+{{- end -}}
+{{- if not (hasKey .Values.dbMigration "enabled") -}}
+{{- $_ := set .Values.dbMigration "enabled" true -}}
+{{- end -}}
+{{- if not .Values.dbMigration.jobAnnotations -}}
+{{- $_ := set .Values.dbMigration "jobAnnotations" dict -}}
+{{- end -}}
+{{- if not .Values.dbMigration.podAnnotations -}}
+{{- $_ := set .Values.dbMigration "podAnnotations" dict -}}
+{{- end -}}
+{{- if not .Values.dbMigration.podLabels -}}
+{{- $_ := set .Values.dbMigration "podLabels" dict -}}
+{{- end -}}
+{{- if not .Values.dbMigration.resources -}}
+{{- $_ := set .Values.dbMigration "resources" dict -}}
+{{- end -}}
+{{- if not .Values.dbMigration.resources.requests -}}
+{{- $_ := set .Values.dbMigration.resources "requests" dict -}}
+{{- end -}}
+{{- if not .Values.dbMigration.resources.limits -}}
+{{- $_ := set .Values.dbMigration.resources "limits" dict -}}
+{{- end -}}
+{{- if not (hasKey .Values.dbMigration.resources.requests "cpu") -}}
+{{- $_ := set .Values.dbMigration.resources.requests "cpu" "100m" -}}
+{{- end -}}
+{{- if not (hasKey .Values.dbMigration.resources.requests "memory") -}}
+{{- $_ := set .Values.dbMigration.resources.requests "memory" "128Mi" -}}
+{{- end -}}
+{{- if not (hasKey .Values.dbMigration.resources.limits "cpu") -}}
+{{- $_ := set .Values.dbMigration.resources.limits "cpu" "500m" -}}
+{{- end -}}
+{{- if not (hasKey .Values.dbMigration.resources.limits "memory") -}}
+{{- $_ := set .Values.dbMigration.resources.limits "memory" "512Mi" -}}
+{{- end -}}
+
+{{/* Redis defaults */}}
+{{- if not .Values.redis -}}
+{{- $_ := set .Values "redis" dict -}}
+{{- end -}}
+{{- if not .Values.redis.url -}}
+{{- $_ := set .Values.redis "url" "redis://localhost:6379" -}}
+{{- end -}}
+
+{{/* Resources defaults */}}
+{{- if not .Values.resources -}}
+{{- $_ := set .Values "resources" dict -}}
+{{- end -}}
+
+{{/* Worker resources defaults */}}
+{{- if not .Values.resources.worker -}}
+{{- $_ := set .Values.resources "worker" dict -}}
+{{- end -}}
+{{- if not .Values.resources.worker.requests -}}
+{{- $_ := set .Values.resources.worker "requests" dict -}}
+{{- end -}}
+{{- if not .Values.resources.worker.requests.cpu -}}
+{{- $_ := set .Values.resources.worker.requests "cpu" "100m" -}}
+{{- end -}}
+{{- if not .Values.resources.worker.requests.memory -}}
+{{- $_ := set .Values.resources.worker.requests "memory" "128Mi" -}}
+{{- end -}}
+{{- if not .Values.resources.worker.limits -}}
+{{- $_ := set .Values.resources.worker "limits" dict -}}
+{{- end -}}
+{{- if not .Values.resources.worker.limits.cpu -}}
+{{- $_ := set .Values.resources.worker.limits "cpu" "500m" -}}
+{{- end -}}
+{{- if not .Values.resources.worker.limits.memory -}}
+{{- $_ := set .Values.resources.worker.limits "memory" "512Mi" -}}
+{{- end -}}
+
+{{/* App resources defaults */}}
+{{- if not .Values.resources.app -}}
+{{- $_ := set .Values.resources "app" dict -}}
+{{- end -}}
+{{- if not .Values.resources.app.requests -}}
+{{- $_ := set .Values.resources.app "requests" dict -}}
+{{- end -}}
+{{- if not .Values.resources.app.requests.cpu -}}
+{{- $_ := set .Values.resources.app.requests "cpu" "100m" -}}
+{{- end -}}
+{{- if not .Values.resources.app.requests.memory -}}
+{{- $_ := set .Values.resources.app.requests "memory" "128Mi" -}}
+{{- end -}}
+{{- if not .Values.resources.app.limits -}}
+{{- $_ := set .Values.resources.app "limits" dict -}}
+{{- end -}}
+{{- if not .Values.resources.app.limits.cpu -}}
+{{- $_ := set .Values.resources.app.limits "cpu" "500m" -}}
+{{- end -}}
+{{- if not .Values.resources.app.limits.memory -}}
+{{- $_ := set .Values.resources.app.limits "memory" "512Mi" -}}
+{{- end -}}
+
+{{/* Supervisor resources defaults */}}
+{{- if not .Values.resources.supervisor -}}
+{{- $_ := set .Values.resources "supervisor" dict -}}
+{{- end -}}
+{{- if not .Values.resources.supervisor.requests -}}
+{{- $_ := set .Values.resources.supervisor "requests" dict -}}
+{{- end -}}
+{{- if not .Values.resources.supervisor.requests.cpu -}}
+{{- $_ := set .Values.resources.supervisor.requests "cpu" "100m" -}}
+{{- end -}}
+{{- if not .Values.resources.supervisor.requests.memory -}}
+{{- $_ := set .Values.resources.supervisor.requests "memory" "128Mi" -}}
+{{- end -}}
+{{- if not .Values.resources.supervisor.limits -}}
+{{- $_ := set .Values.resources.supervisor "limits" dict -}}
+{{- end -}}
+{{- if not .Values.resources.supervisor.limits.cpu -}}
+{{- $_ := set .Values.resources.supervisor.limits "cpu" "500m" -}}
+{{- end -}}
+{{- if not .Values.resources.supervisor.limits.memory -}}
+{{- $_ := set .Values.resources.supervisor.limits "memory" "512Mi" -}}
+{{- end -}}
+
+{{/* Autoscaling defaults */}}
+{{- if not .Values.autoscaling -}}
+{{- $_ := set .Values "autoscaling" dict -}}
+{{- end -}}
+{{- if not (hasKey .Values.autoscaling "enabled") -}}
+{{- $_ := set .Values.autoscaling "enabled" false -}}
+{{- end -}}
+{{- if not .Values.autoscaling.minReplicas -}}
+{{- $_ := set .Values.autoscaling "minReplicas" 1 -}}
+{{- end -}}
+{{- if not .Values.autoscaling.maxReplicas -}}
+{{- $_ := set .Values.autoscaling "maxReplicas" 100 -}}
+{{- end -}}
+{{- if not .Values.autoscaling.targetCPUUtilizationPercentage -}}
+{{- $_ := set .Values.autoscaling "targetCPUUtilizationPercentage" 80 -}}
+{{- end -}}
+{{- if not .Values.autoscaling.targetMemoryUtilizationPercentage -}}
+{{- $_ := set .Values.autoscaling "targetMemoryUtilizationPercentage" 80 -}}
+{{- end -}}
+
+{{/* Database defaults */}}
+{{- if not .Values.database -}}
+{{- $_ := set .Values "database" dict -}}
+{{- end -}}
+{{- if not .Values.database.externalHost -}}
+{{- $_ := set .Values.database "externalHost" "localhost" -}}
+{{- end -}}
+{{- if not .Values.database.externalPort -}}
+{{- $_ := set .Values.database "externalPort" 5432 -}}
+{{- end -}}
+{{- if not .Values.database.externalDatabase -}}
+{{- $_ := set .Values.database "externalDatabase" "trigger" -}}
+{{- end -}}
+{{- if not .Values.database.externalUser -}}
+{{- $_ := set .Values.database "externalUser" "trigger" -}}
+{{- end -}}
+{{- if not .Values.database.externalPassword -}}
+{{- $_ := set .Values.database "externalPassword" "trigger" -}}
+{{- end -}}
+
+{{/* Database migration defaults */}}
+{{- if not .Values.dbMigration -}}
+{{- $_ := set .Values "dbMigration" dict -}}
+{{- end -}}
+{{- if not (hasKey .Values.dbMigration "enabled") -}}
+{{- $_ := set .Values.dbMigration "enabled" true -}}
+{{- end -}}
+{{- if not .Values.dbMigration.jobAnnotations -}}
+{{- $_ := set .Values.dbMigration "jobAnnotations" dict -}}
+{{- end -}}
+{{- if not .Values.dbMigration.podAnnotations -}}
+{{- $_ := set .Values.dbMigration "podAnnotations" dict -}}
+{{- end -}}
+{{- if not .Values.dbMigration.podLabels -}}
+{{- $_ := set .Values.dbMigration "podLabels" dict -}}
+{{- end -}}
+{{- if not .Values.dbMigration.resources -}}
+{{- $_ := set .Values.dbMigration "resources" dict -}}
+{{- end -}}
+{{- if not .Values.dbMigration.resources.requests -}}
+{{- $_ := set .Values.dbMigration.resources "requests" dict -}}
+{{- end -}}
+{{- if not .Values.dbMigration.resources.limits -}}
+{{- $_ := set .Values.dbMigration.resources "limits" dict -}}
+{{- end -}}
+{{- if not (hasKey .Values.dbMigration.resources.requests "cpu") -}}
+{{- $_ := set .Values.dbMigration.resources.requests "cpu" "100m" -}}
+{{- end -}}
+{{- if not (hasKey .Values.dbMigration.resources.requests "memory") -}}
+{{- $_ := set .Values.dbMigration.resources.requests "memory" "128Mi" -}}
+{{- end -}}
+{{- if not (hasKey .Values.dbMigration.resources.limits "cpu") -}}
+{{- $_ := set .Values.dbMigration.resources.limits "cpu" "500m" -}}
+{{- end -}}
+{{- if not (hasKey .Values.dbMigration.resources.limits "memory") -}}
+{{- $_ := set .Values.dbMigration.resources.limits "memory" "512Mi" -}}
+{{- end -}}
+
+{{/* Redis defaults */}}
+{{- if not .Values.redis -}}
+{{- $_ := set .Values "redis" dict -}}
+{{- end -}}
+{{- if not .Values.redis.url -}}
+{{- $_ := set .Values.redis "url" "redis://localhost:6379" -}}
+{{- end -}}
+
+{{/* Resources defaults */}}
+{{- if not .Values.resources -}}
+{{- $_ := set .Values "resources" dict -}}
+{{- end -}}
+
+{{/* Worker resources defaults */}}
+{{- if not .Values.resources.worker -}}
+{{- $_ := set .Values.resources "worker" dict -}}
+{{- end -}}
+{{- if not .Values.resources.worker.requests -}}
+{{- $_ := set .Values.resources.worker "requests" dict -}}
+{{- end -}}
+{{- if not .Values.resources.worker.requests.cpu -}}
+{{- $_ := set .Values.resources.worker.requests "cpu" "100m" -}}
+{{- end -}}
+{{- if not .Values.resources.worker.requests.memory -}}
+{{- $_ := set .Values.resources.worker.requests "memory" "128Mi" -}}
+{{- end -}}
+{{- if not .Values.resources.worker.limits -}}
+{{- $_ := set .Values.resources.worker "limits" dict -}}
+{{- end -}}
+{{- if not .Values.resources.worker.limits.cpu -}}
+{{- $_ := set .Values.resources.worker.limits "cpu" "500m" -}}
+{{- end -}}
+{{- if not .Values.resources.worker.limits.memory -}}
+{{- $_ := set .Values.resources.worker.limits "memory" "512Mi" -}}
+{{- end -}}
+
+{{/* App resources defaults */}}
+{{- if not .Values.resources.app -}}
+{{- $_ := set .Values.resources "app" dict -}}
+{{- end -}}
+{{- if not .Values.resources.app.requests -}}
+{{- $_ := set .Values.resources.app "requests" dict -}}
+{{- end -}}
+{{- if not .Values.resources.app.requests.cpu -}}
+{{- $_ := set .Values.resources.app.requests "cpu" "100m" -}}
+{{- end -}}
+{{- if not .Values.resources.app.requests.memory -}}
+{{- $_ := set .Values.resources.app.requests "memory" "128Mi" -}}
+{{- end -}}
+{{- if not .Values.resources.app.limits -}}
+{{- $_ := set .Values.resources.app "limits" dict -}}
+{{- end -}}
+{{- if not .Values.resources.app.limits.cpu -}}
+{{- $_ := set .Values.resources.app.limits "cpu" "500m" -}}
+{{- end -}}
+{{- if not .Values.resources.app.limits.memory -}}
+{{- $_ := set .Values.resources.app.limits "memory" "512Mi" -}}
+{{- end -}}
+
+{{/* Supervisor resources defaults */}}
+{{- if not .Values.resources.supervisor -}}
+{{- $_ := set .Values.resources "supervisor" dict -}}
+{{- end -}}
+{{- if not .Values.resources.supervisor.requests -}}
+{{- $_ := set .Values.resources.supervisor "requests" dict -}}
+{{- end -}}
+{{- if not .Values.resources.supervisor.requests.cpu -}}
+{{- $_ := set .Values.resources.supervisor.requests "cpu" "100m" -}}
+{{- end -}}
+{{- if not .Values.resources.supervisor.requests.memory -}}
+{{- $_ := set .Values.resources.supervisor.requests "memory" "128Mi" -}}
+{{- end -}}
+{{- if not .Values.resources.supervisor.limits -}}
+{{- $_ := set .Values.resources.supervisor "limits" dict -}}
+{{- end -}}
+{{- if not .Values.resources.supervisor.limits.cpu -}}
+{{- $_ := set .Values.resources.supervisor.limits "cpu" "500m" -}}
+{{- end -}}
+{{- if not .Values.resources.supervisor.limits.memory -}}
+{{- $_ := set .Values.resources.supervisor.limits "memory" "512Mi" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Validate required values
 */}}
 {{- define "trigger-dev.validateValues" -}}
+{{- include "trigger-dev.defaultValues" . -}}
 {{/* Database validation */}}
 {{- if and (not .Values.quickstart.enabled) (not .Values.database.connectionStringSecret) (eq .Values.database.externalHost "your-neon-db-host.neon.tech") -}}
 {{- fail "Please provide a valid database host or connection string secret" -}}

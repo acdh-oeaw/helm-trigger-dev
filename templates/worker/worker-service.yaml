@@ -1,4 +1,5 @@
-{{- if and .Values.worker.enabled .Values.worker.service.enabled }}
+{{- include "trigger-dev.validateValues" . -}}
+{{- if .Values.worker.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
