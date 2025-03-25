@@ -1,20 +1,20 @@
-# Helm chart specific
+# Helm chart specific ignores
 *.tgz
 .helm/
 .DS_Store
 
 # Local values files with sensitive data
-my-values.yaml
-*-values.yaml
+values.yaml
+values-*.yaml
 !values.yaml
-!values-production.yaml
+!values.*.yaml.template
 
-# IDE specific
+# IDE specific ignores
 .idea/
 .vscode/
 *.swp
 *.swo
 
-# OS specific
+# OS specific ignores
 .DS_Store
 Thumbs.db 

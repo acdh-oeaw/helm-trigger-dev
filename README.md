@@ -8,7 +8,7 @@ This Helm chart deploys [Trigger.dev](https://trigger.dev/) - an open-source pla
 
 | Trigger.dev Version | Chart Version | Kubernetes Version |
 |-------------------|---------------|-------------------|
-| 3.3.x             | 3.3.18        | 1.19+            |
+| 3.3.18        | 3.3.18        | 1.19+            |
 
 ## Prerequisites
 
@@ -16,6 +16,108 @@ This Helm chart deploys [Trigger.dev](https://trigger.dev/) - an open-source pla
 - Helm 3.2.0+
 - External PostgreSQL database (e.g., [Neon](https://neon.tech/))
 - External Redis instance (e.g., [Upstash](https://upstash.com/))
+
+## Installation
+
+### Using Template Files
+
+This chart provides several template files to help you get started:
+
+- `values.yaml` - Default values (do not modify directly)
+- `values.minimal.yaml.template` - Quick start configuration
+- `values.complete.yaml.template` - Full configuration with all options
+- `values.production.yaml.template` - Production-ready configuration
+
+To use a template:
+
+1. Choose the template that best fits your needs:
+   ```bash
+   # For quick start
+   cp values.minimal.yaml.template values.yaml
+
+   # For complete configuration
+   cp values.complete.yaml.template values.yaml
+
+   # For production setup
+   cp values.production.yaml.template values.yaml
+   ```
+
+2. Edit the `values.yaml` file with your actual values:
+   ```yaml
+   database:
+     externalHost: "your-actual-db-host"
+     externalPort: 5432
+     externalDatabase: "your-db-name"
+     externalUser: "your-db-user"
+     externalPassword: "your-db-password"
+
+   redis:
+     url: "redis://your-actual-redis-host:6379"
+   ```
+
+3. Install the chart:
+   ```bash
+   helm install trigger-dev . -f values.yaml
+   ```
+
+### Quick Start
+
+For a quick start with minimal configuration:
+
+```bash
+# Copy the minimal template
+cp values.minimal.yaml.template values.yaml
+
+# Edit values.yaml with your database and Redis details
+# Then install
+helm install trigger-dev . -f values.yaml
+```
+
+### Production Deployment
+
+For a production deployment:
+
+```bash
+# Copy the production template
+cp values.production.yaml.template values.yaml
+
+# Edit values.yaml with your production values
+# Then install
+helm install trigger-dev . -f values.yaml
+```
+
+## Configuration
+
+See the [values.yaml](values.yaml) file for all available configuration options.
+
+## Values
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `image.repository` | Container image repository | `ghcr.io/triggerdotdev/trigger.dev` |
+| `image.tag` | Container image tag | `3.3.18` |
+| `image.pullPolicy` | Container image pull policy | `IfNotPresent` |
+| `database.externalHost` | External database host | `""` |
+| `database.externalPort` | External database port | `5432` |
+| `database.externalDatabase` | External database name | `postgres` |
+| `database.externalUser` | External database user | `postgres` |
+| `database.externalPassword` | External database password | `""` |
+| `redis.url` | Redis URL | `""` |
+| `app.replicas` | Number of app replicas | `1` |
+| `worker.replicas` | Number of worker replicas | `1` |
+| `supervisor.replicas` | Number of supervisor replicas | `1` |
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Quick Installation
 

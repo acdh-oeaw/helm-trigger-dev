@@ -2,8 +2,7 @@ apiVersion: v2
 name: trigger-dev
 description: A Helm chart for Trigger.dev - an open-source platform for creating event-driven background tasks and workflows
 type: application
-version: 3.3.18
-appVersion: "3.3.18"
+version: v3.3.18
 icon: https://raw.githubusercontent.com/triggerdotdev/trigger.dev/main/apps/web/public/icon.png
 keywords:
   - trigger.dev

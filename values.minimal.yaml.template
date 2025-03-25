@@ -1,0 +1,35 @@
+# Minimal configuration for quick start
+# Copy this file to values.yaml and customize as needed
+
+# Image Settings
+image:
+  repository: ghcr.io/triggerdotdev/trigger.dev
+  tag: "v{{ .Chart.Version }}"  # Uses chart version
+  pullPolicy: IfNotPresent
+
+# Database configuration (required)
+database:
+  externalHost: "your-db-host"
+  externalPort: 5432
+  externalDatabase: "postgres"
+  externalUser: "postgres"
+  externalPassword: "your-password"
+
+# Redis configuration (required)
+redis:
+  url: "redis://your-redis-host:6379"
+
+# Basic app configuration
+app:
+  enabled: true
+  replicas: 1
+
+# Basic worker configuration
+worker:
+  enabled: true
+  replicas: 1
+
+# Basic supervisor configuration
+supervisor:
+  enabled: true
+  replicas: 1 

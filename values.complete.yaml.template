@@ -1,0 +1,172 @@
+# Complete configuration template with all possible options
+# Copy this file to values.yaml and customize as needed
+
+# Global Settings
+namespace: "trigger-dev"
+createNamespace: true
+
+# Image Settings
+image:
+  repository: ghcr.io/triggerdotdev/trigger.dev
+  tag: "v{{ .Chart.Version }}"
+  pullPolicy: IfNotPresent
+  digest: ""
+
+# Security Settings
+podSecurityContext:
+  fsGroup: 1000
+  runAsUser: 1000
+  runAsNonRoot: true
+
+securityContext:
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  capabilities:
+    drop:
+      - ALL
+
+# Resource Management
+resources:
+  app:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  worker:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Database Configuration
+database:
+  # Option 1: Use connection string secret
+  connectionStringSecret: "trigger-db-secret"
+  
+  # Option 2: Direct connection details
+  externalHost: "your-db-host"
+  externalPort: 5432
+  externalDatabase: "postgres"
+  externalUser: "postgres"
+  externalPassword: "your-password"
+  
+  # Connection options
+  sslMode: "require"
+  poolMin: 0
+  poolMax: 10
+  connectionTimeout: 60
+  statementTimeout: 30000
+  idleTimeout: 10000
+  usePgBouncer: false
+
+# Redis Configuration
+redis:
+  # Option 1: Direct URL
+  url: "redis://your-redis-host:6379"
+  
+  # Option 2: Use secret
+  secretName: "trigger-redis-secret"
+  
+  # Connection options
+  tls: false
+  connectTimeout: 5000
+
+# Component Configuration
+app:
+  enabled: true
+  replicas: 1
+  nodeEnv: "production"
+  service:
+    enabled: true
+    type: ClusterIP
+    port: 3000
+  env: {}
+  podLabels: {}
+  podAnnotations: {}
+
+worker:
+  enabled: true
+  replicas: 1
+  nodeEnv: "production"
+  service:
+    enabled: false
+    type: ClusterIP
+    port: 3000
+  env: {}
+  podLabels: {}
+  podAnnotations: {}
+
+supervisor:
+  enabled: true
+  replicas: 1
+  mode: "coordinator"
+  nodeEnv: "production"
+  service:
+    type: ClusterIP
+    port: 8020
+  env: {}
+  podLabels: {}
+  podAnnotations: {}
+
+# Production Features
+networkPolicy:
+  enabled: false
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+
+priorityClassName: ""
+
+topologySpreadConstraints: []
+
+# Ingress Configuration
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+
+# RBAC Configuration
+rbac:
+  create: true
+  rules:
+    - apiGroups: [""]
+      resources: ["pods", "pods/log", "pods/exec", "configmaps", "secrets", "events"]
+      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+    - apiGroups: ["batch"]
+      resources: ["jobs"]
+      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+# Service Account Configuration
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+# Database Migration Configuration
+dbMigration:
+  enabled: true
+  backoffLimit: 3
+  timeout: 600
+  ttlSecondsAfterFinished: 3600
+  nodeEnv: "production"
+  podLabels: {}
+  podAnnotations: {}
+  env: {} 

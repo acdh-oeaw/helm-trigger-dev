@@ -135,8 +135,8 @@ Common labels
 {{- define "trigger-dev.labels" -}}
 helm.sh/chart: {{ include "trigger-dev.chart" . }}
 {{ include "trigger-dev.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- if .Chart.Version }}
+app.kubernetes.io/version: {{ .Chart.Version | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
