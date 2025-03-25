@@ -1,0 +1,11 @@
+{{- if .Values.createNamespace }}
+{{- if or .Values.namespace (ne .Release.Namespace "default") }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "trigger-dev.labels" . | nindent 4 }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+{{- end }} 

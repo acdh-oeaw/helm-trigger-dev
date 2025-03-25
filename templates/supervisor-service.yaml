@@ -1,0 +1,20 @@
+{{- if .Values.supervisor.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "trigger-dev.fullname" . }}-supervisor
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "trigger-dev.labels" . | nindent 4 }}
+    app.kubernetes.io/component: supervisor
+spec:
+  type: {{ .Values.supervisor.service.type }}
+  ports:
+    - port: {{ .Values.supervisor.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "trigger-dev.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: supervisor
+{{- end }} 

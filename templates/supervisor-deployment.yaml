@@ -1,0 +1,173 @@
+{{- if .Values.supervisor.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "trigger-dev.supervisor.name" . }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "trigger-dev.labels" . | nindent 4 }}
+    app.kubernetes.io/component: supervisor
+spec:
+  replicas: {{ .Values.supervisor.replicas }}
+  selector:
+    matchLabels:
+      {{- include "trigger-dev.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: supervisor
+  template:
+    metadata:
+      {{- with .Values.supervisor.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "trigger-dev.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: supervisor
+        {{- with .Values.supervisor.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "trigger-dev.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- if .Values.supervisor.initContainers }}
+      initContainers:
+        {{- toYaml .Values.supervisor.initContainers | nindent 8 }}
+      {{- end }}
+      {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}-supervisor
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+{{- if eq .Values.supervisor.mode "coordinator" }}
+  {{- if .Values.coordinatorImage.digest }}
+          image: "{{ .Values.coordinatorImage.repository }}@{{ .Values.coordinatorImage.digest }}"
+  {{- else }}
+          image: "{{ .Values.coordinatorImage.repository }}:{{ .Values.coordinatorImage.tag | default .Chart.AppVersion }}"
+  {{- end }}
+          imagePullPolicy: {{ .Values.coordinatorImage.pullPolicy }}
+{{- else if eq .Values.supervisor.mode "provider" }}
+  {{- if .Values.kubernetesProviderImage.digest }}
+          image: "{{ .Values.kubernetesProviderImage.repository }}@{{ .Values.kubernetesProviderImage.digest }}"
+  {{- else }}
+          image: "{{ .Values.kubernetesProviderImage.repository }}:{{ .Values.kubernetesProviderImage.tag | default .Chart.AppVersion }}"
+  {{- end }}
+          imagePullPolicy: {{ .Values.kubernetesProviderImage.pullPolicy }}
+{{- else }}
+  {{- if .Values.supervisorImage.digest }}
+          image: "{{ .Values.supervisorImage.repository }}@{{ .Values.supervisorImage.digest }}"
+  {{- else }}
+          image: "{{ .Values.supervisorImage.repository }}:{{ .Values.supervisorImage.tag | default .Chart.AppVersion }}"
+  {{- end }}
+          imagePullPolicy: {{ .Values.supervisorImage.pullPolicy }}
+{{- end }}
+          env:
+            - name: NODE_ENV
+              value: {{ .Values.supervisor.nodeEnv | quote }}
+            - name: TRIGGER_API_URL
+              value: "http://{{ include "trigger-dev.app.name" . }}:{{ .Values.service.port }}"
+            # Workload API settings (coordinator mode)
+            - name: TRIGGER_WORKLOAD_API_ENABLED
+              value: {{- if or (eq .Values.supervisor.mode "coordinator") (eq .Values.supervisor.mode "both") }} "true" {{- else }} "false" {{- end }}
+            - name: TRIGGER_WORKLOAD_API_PROTOCOL
+              value: "http"
+            - name: TRIGGER_WORKLOAD_API_PORT_INTERNAL
+              value: "{{ .Values.supervisor.service.port }}"
+            - name: TRIGGER_WORKLOAD_API_PORT_EXTERNAL
+              value: "{{ .Values.supervisor.service.port }}"
+            # Dequeue settings (provider mode)
+            - name: TRIGGER_DEQUEUE_ENABLED
+              value: {{- if or (eq .Values.supervisor.mode "provider") (eq .Values.supervisor.mode "both") }} "true" {{- else }} "false" {{- end }}
+            - name: TRIGGER_DEQUEUE_INTERVAL_MS
+              value: "{{ .Values.supervisor.workloadApi.dequeueIntervalMs }}"
+            # Kubernetes settings
+            - name: KUBERNETES_FORCE_ENABLED
+              value: "true"
+            - name: KUBERNETES_NAMESPACE
+              value: "{{ .Values.namespace | default .Release.Namespace }}"
+            - name: KUBERNETES_IMAGE_PULL_POLICY
+              value: "IfNotPresent"
+            # Connection retry settings
+            - name: DATABASE_CONNECTION_RETRIES
+              value: "5"
+            - name: DATABASE_CONNECTION_RETRY_DELAY_MS
+              value: "2000"
+            - name: REDIS_CONNECTION_RETRIES
+              value: "5" 
+            - name: REDIS_CONNECTION_RETRY_DELAY_MS
+              value: "2000"
+            # Health check settings
+            - name: HEALTH_CHECK_INTERVAL_MS
+              value: "10000"
+            - name: HEALTH_CHECK_TIMEOUT_MS 
+              value: "5000"
+            # Configure task running
+            - name: MAX_TASK_RETRY_ATTEMPTS
+              value: "3"
+            {{- include "trigger-dev.commonEnv" . | nindent 12 }}
+            {{- with .Values.supervisor.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.supervisor.service.port }}
+              protocol: TCP
+          {{- with .Values.supervisor.startupProbe }}
+          startupProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.supervisor.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.supervisor.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources.supervisor | nindent 12 }}
+      {{- with .Values.supervisor.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.supervisor.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.supervisor.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "trigger-dev.supervisor.name" . }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "trigger-dev.labels" . | nindent 4 }}
+    app.kubernetes.io/component: supervisor
+  {{- with .Values.supervisor.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.supervisor.service.type }}
+  ports:
+    - port: {{ .Values.supervisor.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "trigger-dev.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: supervisor
+{{- end }}

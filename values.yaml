@@ -1,0 +1,432 @@
+# Default values for trigger-dev.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Namespace configuration
+# Set createNamespace to true if you want to automatically create a new namespace
+createNamespace: false
+namespace: "trigger-dev"
+
+# Quick start mode - when enabled, generates secure random secrets for internal auth and dashboard
+# Recommended: Keep enabled for initial setup and testing
+quickstart:
+  enabled: true
+  # Note: For production, consider disabling quickstart and managing your own secrets
+
+# Common image settings
+# These settings apply to the main application image
+image:
+  repository: ghcr.io/triggerdotdev/trigger.dev
+  tag: "3.3.18"  # Set default to match appVersion instead of "latest"
+  pullPolicy: IfNotPresent
+  # Optional digest for image verification
+  # For production, consider using image digests for immutability
+  digest: ""
+
+# Supervisor image settings
+# Used when supervisor.mode is set to "both"
+supervisorImage:
+  repository: ghcr.io/triggerdotdev/supervisor
+  tag: "3.3.18"  # Set default to match appVersion instead of "latest"
+  pullPolicy: IfNotPresent
+  # Optional digest for image verification
+  digest: ""
+
+# Coordinator image settings (for Supervisor in coordinator mode)
+# Used when supervisor.mode is set to "coordinator" (default)
+coordinatorImage:
+  repository: ghcr.io/triggerdotdev/coordinator
+  tag: "3.3.18"  # Set default to match appVersion instead of "latest"
+  pullPolicy: IfNotPresent
+  # Optional digest for image verification
+  digest: ""
+
+# Kubernetes provider image settings
+# Used when supervisor.mode is set to "provider"
+kubernetesProviderImage:
+  repository: ghcr.io/triggerdotdev/provider/kubernetes
+  tag: "3.3.18"  # Set default to match appVersion instead of "latest"
+  pullPolicy: IfNotPresent
+  # Optional digest for image verification
+  digest: ""
+
+# ImagePullSecrets configuration
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# Pod Security Context
+# These settings apply to all pods
+podSecurityContext:
+  fsGroup: 1000
+  runAsUser: 1000
+  runAsNonRoot: true
+  # For more restrictive production settings, consider enabling:
+  # seccompProfile:
+  #   type: RuntimeDefault
+
+# Container Security Context
+# These settings apply to all containers
+securityContext:
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  capabilities:
+    drop:
+      - ALL
+  # For production, consider enabling:
+  # readOnlyRootFilesystem: true
+
+# Resource settings for components
+# Adjust these values based on your workload requirements
+resources:
+  app:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    # limits:
+    #   memory: 512Mi
+  worker:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    # limits:
+    #   memory: 512Mi
+  supervisor:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    # limits:
+    #   memory: 512Mi
+  dbMigration:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    # limits:
+    #   memory: 512Mi
+
+# Global environment variables (applied to all deployments)
+env: {}
+
+# App component configuration
+app:
+  enabled: true
+  replicas: 1
+  podLabels: {}
+  podAnnotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  # Additional environment variables for app deployment
+  env: {}
+  # Port configuration
+  port: 3000
+  # Node environment setting
+  nodeEnv: "production"
+  # Support for init containers
+  initContainers: []
+  # Example init container:
+  # - name: init-check-dependencies
+  #   image: busybox
+  #   command: ['sh', '-c', 'until nslookup myservice; do echo waiting for myservice; sleep 2; done;']
+  startupProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 6
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: http
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: http
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+
+# Worker component configuration
+worker:
+  enabled: true
+  replicas: 1
+  podLabels: {}
+  podAnnotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  # Additional environment variables for worker deployment
+  env: {}
+  # Node environment setting
+  nodeEnv: "production"
+  # Enable service for worker component
+  service:
+    enabled: false
+    type: ClusterIP
+    port: 3000
+    annotations: {}
+  # Support for init containers
+  initContainers: []
+  startupProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 6
+  # Added missing probes for worker
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: http
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: http
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+
+# Supervisor component configuration
+supervisor:
+  enabled: true
+  replicas: 1
+  # Modes available: coordinator, provider, or both
+  mode: coordinator
+  podLabels: {}
+  podAnnotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  # Additional environment variables for supervisor deployment
+  env: {}
+  # Node environment setting
+  nodeEnv: "production"
+  # Workload API settings
+  workloadApi:
+    dequeueIntervalMs: 1000
+  # Support for init containers
+  initContainers: []
+  startupProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 6
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: http
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: http
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+  service:
+    type: ClusterIP
+    port: 8020
+    annotations: {}
+
+# Service configuration for the application
+service:
+  type: ClusterIP
+  port: 3000
+  annotations: {}
+  labels: {}
+
+# Ingress configuration
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  # Examples of useful annotations:
+  #  kubernetes.io/ingress.class: nginx
+  #  kubernetes.io/tls-acme: "true"
+  #  cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  #  external-dns.alpha.kubernetes.io/hostname: trigger.example.com
+  #  nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  # Example TLS configuration
+  # - secretName: trigger-tls
+  #   hosts:
+  #     - trigger.example.com
+
+# RBAC Configuration
+# Enable RBAC for Kubernetes provider to create and manage task pods
+rbac:
+  create: true
+  # Rules with minimal permissions required for the Kubernetes provider
+  rules:
+    - apiGroups: [""]
+      resources: ["pods", "pods/log", "pods/exec", "configmaps", "secrets", "events"]
+      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+    - apiGroups: ["batch"]
+      resources: ["jobs"]
+      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+# Service Account Configuration
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+# Network Policy Configuration
+# Enable to restrict pod traffic
+networkPolicy:
+  enabled: false
+  # Production recommendation: set to true and configure appropriate policies
+
+# External Database configuration
+database:
+  # External PostgreSQL connection details
+  # This chart requires an external PostgreSQL database like Neon (https://neon.tech)
+  # REQUIRED: Update these values with your database credentials
+  # PRODUCTION: Use database.connectionStringSecret instead for better security
+  externalHost: your-neon-db-host.neon.tech  # Example: db.abcdefg.supabase.co or mydb.123456.us-east-1.neon.tech
+  externalPort: 5432
+  externalDatabase: postgres
+  externalUser: postgres
+  externalPassword: postgres  # Consider using a secret for production
+  sslMode: require  # Options: disable, allow, prefer, require, verify-ca, verify-full
+  
+  # Connection pool settings
+  poolMin: 0
+  poolMax: 10
+  
+  # Timeout settings
+  connectionTimeout: 60  # In seconds
+  statementTimeout: 30000  # In milliseconds
+  idleTimeout: 10000  # In milliseconds
+  
+  # Use PgBouncer for connection pooling
+  usePgBouncer: false
+  
+  # Additional database parameters
+  additionalParams: {}
+  
+  # Alternative: Use an existing Kubernetes secret containing the database URL
+  # This is the recommended approach for production environments
+  # The secret should have DATABASE_URL and DIRECT_URL keys
+  connectionStringSecret: ""
+  # Example with external secret creation:
+  # kubectl create secret generic trigger-db-secret \
+  #   --from-literal=DATABASE_URL="postgres://user:password@your-host:5432/postgres?sslmode=require" \
+  #   --from-literal=DIRECT_URL="postgres://user:password@your-host:5432/postgres?sslmode=require"
+
+# Redis configuration
+# This chart requires an external Redis instance like Upstash (https://upstash.com)
+redis:
+  # REQUIRED: Update this value with your Redis URL
+  # Format: redis://username:password@host:port
+  # or rediss://username:password@host:port for TLS
+  url: redis://username:password@host:port
+  
+  # Enable TLS for Redis connection
+  tls: false
+  
+  # Connection timeout in milliseconds
+  connectTimeout: 5000
+  
+  # Alternative: Use an existing Kubernetes secret containing the Redis URL
+  # This is the recommended approach for production environments
+  # The secret should have a REDIS_URL key
+  secretName: ""
+  # Example with external secret creation:
+  # kubectl create secret generic trigger-redis-secret \
+  #   --from-literal=REDIS_URL="redis://username:password@your-redis-host:port"
+
+# Database migration job configuration
+dbMigration:
+  enabled: true
+  # Maximum retries for the migration job
+  backoffLimit: 3
+  # Timeout in seconds for the migration job
+  timeout: 600
+  # Delete the job after completion
+  ttlSecondsAfterFinished: 3600
+  # Node environment for migration
+  nodeEnv: "production"
+  # Labels for migration pod
+  podLabels: {}
+  # Annotations for migration pod
+  podAnnotations: {}
+  # Additional environment variables for migration job
+  env: {}
+  # Node selector for the migration job
+  nodeSelector: {}
+  # Tolerations for the migration job
+  tolerations: []
+  # Affinity for the migration job
+  affinity: {}
+  # Init containers for the migration job
+  initContainers: []
+
+# Horizontal Pod Autoscaler configuration
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+  # For production, enable and configure based on expected load
+
+# Pod Disruption Budget configuration
+podDisruptionBudget:
+  enabled: false
+  # For production with multiple replicas, enable and set minAvailable or maxUnavailable
+  # minAvailable: 1
+  # maxUnavailable: 1
+
+# Priority Class
+# Set this to ensure pods get appropriate scheduling priority
+priorityClassName: ""
+# For production: Create a priority class and reference it here
+
+# Topology Spread Constraints
+# Helps distribute pods across failure domains (nodes, zones)
+topologySpreadConstraints: []
+# For production:
+# - maxSkew: 1
+#   topologyKey: topology.kubernetes.io/zone
+#   whenUnsatisfiable: DoNotSchedule
+#   labelSelector:
+#     matchLabels:
+#       app.kubernetes.io/name: trigger-dev 
+
+# Secret rotation
+secretRotation:
+  enabled: false
+  # For production environments, consider implementing a proper secret rotation mechanism
+  # This section serves as a reminder and placeholder for implementation
+  documentation: "For production environments, use external secret management solutions like Vault or Kubernetes External Secrets" 

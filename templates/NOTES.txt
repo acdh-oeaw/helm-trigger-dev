@@ -1,0 +1,246 @@
+Thank you for installing {{ .Chart.Name }} Helm chart.
+
+=====================================================================
+IMPORTANT CONFIGURATION NOTES
+=====================================================================
+
+NAMESPACE
+- Resources will be created in namespace: {{ .Values.namespace | default .Release.Namespace }}
+{{- if .Values.createNamespace }}
+- The chart will create this namespace if it doesn't exist
+{{- end }}
+
+IMAGES
+- Using GitHub Container Registry (ghcr.io) images:
+  - Image for app/worker: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+{{- if eq .Values.supervisor.mode "coordinator" }}
+  - Image for supervisor (coordinator mode): {{ .Values.coordinatorImage.repository }}:{{ .Values.coordinatorImage.tag }}
+{{- else if eq .Values.supervisor.mode "provider" }}
+  - Image for supervisor (provider mode): {{ .Values.kubernetesProviderImage.repository }}:{{ .Values.kubernetesProviderImage.tag }}
+{{- else }}
+  - Image for supervisor (both mode): {{ .Values.supervisorImage.repository }}:{{ .Values.supervisorImage.tag }}
+{{- end }}
+
+{{- if .Values.quickstart.enabled }}
+QUICKSTART MODE ENABLED
+You've enabled quickstart mode, which means:
+- Secure random secrets have been generated automatically
+- For production use, consider setting your own secrets
+
+{{- end }}
+DEPLOYMENT COMPONENTS
+- The Trigger.dev web application is deployed and accessible via the service: {{ include "trigger-dev.app.name" . }}
+- Worker component for background processing {{ if not .Values.worker.enabled }}is DISABLED{{ end }}
+- Supervisor component {{ if not .Values.supervisor.enabled }}is DISABLED{{ else }}is running in {{ .Values.supervisor.mode }} mode{{ end }}
+- Database migrations will {{ if not .Values.dbMigration.enabled }}NOT{{ end }} be applied automatically
+
+EXTERNAL SERVICES
+- Using an external Neon PostgreSQL database 
+- Using an external Upstash Redis instance
+- No embedded database or Redis containers are included in this chart
+
+KUBERNETES PROVIDER
+- The Supervisor is configured to work with Kubernetes API
+- RBAC permissions are {{ if not .Values.rbac.create }}NOT{{ end }} created for pod management
+
+SECURITY CONFIGURATION
+- Pod security context is {{ if eq (len (keys .Values.podSecurityContext)) 0 }}NOT{{ end }} configured
+- Container security context is {{ if eq (len (keys .Values.securityContext)) 0 }}NOT{{ end }} configured
+{{- if and (ne (len (keys .Values.podSecurityContext)) 0) (ne (len (keys .Values.securityContext)) 0) }}
+- Security contexts are configured with security best practices
+{{- end }}
+
+RESOURCE MANAGEMENT
+{{- if .Values.priorityClassName }}
+- Priority class name is set to: {{ .Values.priorityClassName }}
+{{- else }}
+- No priority class is configured
+{{- end }}
+{{- if .Values.topologySpreadConstraints }}
+- Topology spread constraints are configured for workload distribution
+{{- else }}
+- No topology spread constraints configured
+{{- end }}
+
+=====================================================================
+INTEGRATION INFORMATION
+=====================================================================
+
+{{- if .Values.ingress.enabled }}
+INGRESS CONFIGURATION
+- Ingress is enabled and configured
+{{- if .Values.ingress.tls }}
+- TLS is configured with {{ len .Values.ingress.tls }} secret(s)
+{{- else }}
+- TLS is NOT configured. Consider enabling TLS for production use.
+{{- end }}
+
+{{- if hasKey .Values.ingress.annotations "external-dns.alpha.kubernetes.io/hostname" }}
+EXTERNAL DNS
+- ExternalDNS integration is configured with hostname(s):
+  {{ index .Values.ingress.annotations "external-dns.alpha.kubernetes.io/hostname" }}
+{{- else }}
+- ExternalDNS integration is NOT configured. If you're using ExternalDNS, add the annotation:
+  external-dns.alpha.kubernetes.io/hostname: yourdomain.example.com
+{{- end }}
+
+{{- if hasKey .Values.ingress.annotations "cert-manager.io/cluster-issuer" }}
+CERTIFICATE MANAGEMENT
+- cert-manager integration is configured with issuer:
+  {{ index .Values.ingress.annotations "cert-manager.io/cluster-issuer" }}
+{{- else }}
+- cert-manager integration is NOT configured. If you're using cert-manager, add the annotation:
+  cert-manager.io/cluster-issuer: letsencrypt-prod
+{{- end }}
+{{- end }}
+
+DATABASE CONFIGURATION
+{{- if .Values.database.connectionStringSecret }}
+- Using external secret for database connection: {{ .Values.database.connectionStringSecret }}
+{{- else }}
+- Using configured database parameters for connection
+- Enhanced database connection options:
+  - Connection timeout: {{ .Values.database.connectionTimeout | default 60 }} seconds
+  - Statement timeout: {{ .Values.database.statementTimeout | default 30000 }} ms
+  - Idle timeout: {{ .Values.database.idleTimeout | default 10000 }} ms
+  - Connection pooling: min={{ .Values.database.poolMin }}, max={{ .Values.database.poolMax }}
+{{- end }}
+
+REDIS CONFIGURATION
+{{- if .Values.redis.secretName }}
+- Using external secret for Redis connection: {{ .Values.redis.secretName }}
+{{- else }}
+- Using configured Redis URL for connection
+- TLS enabled: {{ .Values.redis.tls | default true }}
+- Connect timeout: {{ .Values.redis.connectTimeout | default 5000 }} ms
+{{- end }}
+
+=====================================================================
+ACCESS INFORMATION
+=====================================================================
+
+{{- if .Values.ingress.enabled }}
+The application can be accessed via the ingress at:
+{{- range $host := .Values.ingress.hosts }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}
+{{- end }}
+{{- else }}
+The application can be accessed via port-forwarding:
+
+  kubectl port-forward svc/{{ include "trigger-dev.app.name" . }} {{ .Values.service.port }}:{{ .Values.service.port }}
+
+Then access: http://localhost:{{ .Values.service.port }}
+{{- end }}
+
+{{ if .Values.supervisor.enabled }}
+The Supervisor API can be accessed via port-forwarding:
+
+  kubectl port-forward svc/{{ include "trigger-dev.supervisor.name" . }} {{ .Values.supervisor.service.port }}:{{ .Values.supervisor.service.port }}
+
+Then access: http://localhost:{{ .Values.supervisor.service.port }}
+{{ end }}
+
+=====================================================================
+TROUBLESHOOTING
+=====================================================================
+
+To check the status of the pods:
+  kubectl get pods -l "app.kubernetes.io/instance={{ .Release.Name }}"
+
+To check the logs of the web application:
+  kubectl logs -l "app.kubernetes.io/instance={{ .Release.Name }},app.kubernetes.io/component=app"
+
+To check the logs of the worker:
+  kubectl logs -l "app.kubernetes.io/instance={{ .Release.Name }},app.kubernetes.io/component=worker"
+
+To check the logs of the supervisor:
+  kubectl logs -l "app.kubernetes.io/instance={{ .Release.Name }},app.kubernetes.io/component=supervisor"
+
+{{- if .Values.ingress.enabled }}
+{{- range $host := .Values.ingress.hosts }}
+  {{- range .paths }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
+{{- end }}
+{{- else if contains "NodePort" .Values.service.type }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "trigger-dev.app.name" . }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+{{- else if contains "LoadBalancer" .Values.service.type }}
+  NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+        You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "trigger-dev.app.name" . }}'
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "trigger-dev.app.name" . }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+  echo http://$SERVICE_IP:{{ .Values.service.port }}
+{{- else if contains "ClusterIP" .Values.service.type }}
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "trigger-dev.name" . }},app.kubernetes.io/instance={{ .Release.Name }},app.kubernetes.io/component=app" -o jsonpath="{.items[0].metadata.name}")
+  export CONTAINER_PORT=$(kubectl get pod --namespace {{ .Release.Namespace }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+  echo "Visit http://127.0.0.1:8080 to use your application"
+  kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:$CONTAINER_PORT
+{{- end }}
+
+IMPORTANT CONFIGURATION NOTES:
+
+{{- if .Values.quickstart.enabled }}
+🚀 QUICKSTART MODE ENABLED: 
+- Secure random secrets have been generated for you
+- For production use, consider setting your own secrets or using Kubernetes secrets
+{{- end }}
+
+This Helm chart is specifically designed for Kubernetes deployments and uses:
+1. External Neon PostgreSQL database (configured in values.yaml or via secret)
+2. External Upstash Redis instance (configured in values.yaml or via secret)
+{{- if .Values.dbMigration.enabled }}
+3. Database migrations are automatically applied using a Kubernetes Job before the application starts
+{{- end }}
+
+{{- if .Values.supervisor.enabled }}
+{{- if .Values.dbMigration.enabled }}
+4
+{{- else }}
+3
+{{- end }}. The Supervisor component is enabled and configured in {{ .Values.supervisor.mode }} mode.
+   {{- if eq .Values.supervisor.mode "coordinator" }}
+   It will coordinate workloads via the workload API at port {{ .Values.supervisor.service.port }}.
+   {{- else if eq .Values.supervisor.mode "provider" }}
+   It will provide task execution by dequeueing messages from the queue.
+   {{- else }}
+   It will both coordinate workloads and provide task execution.
+   {{- end }}
+{{- if .Values.rbac.create }}
+{{- if or .Values.dbMigration.enabled .Values.supervisor.enabled }}
+5
+{{- else }}
+4
+{{- end }}. RBAC resources have been created to allow the Supervisor to manage Kubernetes pods,
+   access jobs, read ConfigMaps and Secrets, and manage events.
+{{- end }}
+{{- end }}
+
+{{- if .Values.autoscaling.enabled }}
+The Horizontal Pod Autoscaler is enabled and will automatically scale your application based on resource usage.
+{{- end }}
+
+{{- if .Values.podDisruptionBudget.enabled }}
+A Pod Disruption Budget is configured to ensure availability during voluntary disruptions.
+{{- end }}
+
+{{- if .Values.networkPolicy.enabled }}
+Network policies are in place to control traffic to and from your pods.
+{{- end }}
+
+=====================================================================
+PRODUCTION RECOMMENDATIONS
+=====================================================================
+
+For production deployments, we recommend:
+
+1. Enable TLS for ingress with cert-manager
+2. Use external secrets for sensitive information  
+3. Configure proper security contexts (already set by default)
+4. Enable network policies to restrict traffic
+5. Enable pod disruption budgets for availability
+6. Consider horizontal pod autoscaling for dynamic scaling
+7. Use a dedicated namespace for the deployment
+8. Configure topologySpreadConstraints for better workload distribution
+9. Use priorityClassName to ensure critical services get resources
+10. Use image digests for immutable deployments 

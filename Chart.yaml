@@ -1,0 +1,37 @@
+apiVersion: v2
+name: trigger-dev
+description: A Helm chart for Trigger.dev. Uses 'trigger-dev' as the default namespace and GitHub Container Registry (ghcr.io) for images with mode-specific supervisor containers.
+type: application
+version: 3.3.18
+appVersion: "3.3.18"
+# This chart supports Trigger.dev version 3.3.x
+maintainers:
+  - name: Andy
+    url: https://github.com/hongkongkiwi
+keywords:
+  - trigger.dev
+  - automation
+# Dependencies section removed as we're using external Redis and PostgreSQL
+sources:
+  - https://github.com/triggerdotdev/trigger.dev
+home: https://trigger.dev
+icon: https://trigger.dev/favicon-light.png
+annotations:
+  artifacthub.io/links: |
+    - name: Documentation
+      url: https://trigger.dev/docs
+    - name: Discord
+      url: https://discord.gg/JtBAxBr2m3
+    - name: Twitter
+      url: https://twitter.com/triggerdotdev
+  artifacthub.io/screenshots: |
+    - title: Trigger.dev Dashboard
+      url: https://trigger.dev/images/og-image.png
+  # Acknowledge the original application developers
+  artifacthub.io/contributors: |
+    - name: Matt Aitken
+      url: https://github.com/matt-aitken
+    - name: Eric Allam
+      url: https://github.com/ericallam
+    - name: Samuel Evenson
+      url: https://github.com/samejr 

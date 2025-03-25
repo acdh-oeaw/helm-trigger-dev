@@ -1,0 +1,35 @@
+{{- if .Values.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "trigger-dev.app.name" . }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "trigger-dev.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "trigger-dev.app.name" . }}
+  minReplicas: {{ .Values.autoscaling.app.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.app.maxReplicas }}
+  metrics:
+    {{- toYaml .Values.autoscaling.app.metrics | nindent 4 }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "trigger-dev.worker.name" . }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "trigger-dev.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "trigger-dev.worker.name" . }}
+  minReplicas: {{ .Values.autoscaling.worker.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.worker.maxReplicas }}
+  metrics:
+    {{- toYaml .Values.autoscaling.worker.metrics | nindent 4 }}
+{{- end }} 
