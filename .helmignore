@@ -20,4 +20,19 @@
 .project
 .idea/
 *.tmproj
-.vscode/ 
+.vscode/
+# Helm specific
+values-*.yaml
+!values.yaml
+!values-production.yaml
+# Documentation
+*.md
+!README.md
+!ARCHITECTURE.md
+!PRODUCTION.md
+# Test files
+tests/
+*.test.yaml
+# Temporary files
+*.tgz
+*.tar.gz 

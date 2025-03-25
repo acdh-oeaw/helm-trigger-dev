@@ -11,6 +11,9 @@ maintainers:
 keywords:
   - trigger.dev
   - automation
+  - workflow
+  - background-jobs
+  - event-driven
 # Dependencies section removed as we're using external Redis and PostgreSQL
 sources:
   - https://github.com/triggerdotdev/trigger.dev
@@ -34,4 +37,9 @@ annotations:
     - name: Eric Allam
       url: https://github.com/ericallam
     - name: Samuel Evenson
-      url: https://github.com/samejr 
+      url: https://github.com/samejr
+  # Add version compatibility information
+  artifacthub.io/compatibility: |
+    - type: application
+      name: trigger.dev
+      version: "3.3.x" 

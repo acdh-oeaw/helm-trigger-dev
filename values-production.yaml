@@ -1,0 +1,196 @@
+# Production values for trigger-dev
+# This file contains production-specific settings and best practices
+# Before using this file:
+# 1. Review and customize all settings for your environment
+# 2. Ensure you have the required secrets created
+# 3. Adjust resource limits based on your workload
+# 4. Configure your ingress settings
+# 5. Set up proper monitoring and logging
+
+# Disable quickstart mode for production
+quickstart:
+  enabled: false
+
+# Use specific image digests for immutability
+image:
+  repository: ghcr.io/triggerdotdev/trigger.dev
+  tag: "3.3.18"
+  pullPolicy: Always
+  digest: ""  # Add specific digest for production
+
+supervisorImage:
+  repository: ghcr.io/triggerdotdev/supervisor
+  tag: "3.3.18"
+  pullPolicy: Always
+  digest: ""  # Add specific digest for production
+
+coordinatorImage:
+  repository: ghcr.io/triggerdotdev/coordinator
+  tag: "3.3.18"
+  pullPolicy: Always
+  digest: ""  # Add specific digest for production
+
+kubernetesProviderImage:
+  repository: ghcr.io/triggerdotdev/provider/kubernetes
+  tag: "3.3.18"
+  pullPolicy: Always
+  digest: ""  # Add specific digest for production
+
+# Enhanced security context
+podSecurityContext:
+  fsGroup: 1000
+  runAsUser: 1000
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+# Production resource limits
+resources:
+  app:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+  worker:
+    requests:
+      cpu: 300m
+      memory: 512Mi
+    limits:
+      memory: 1.5Gi
+  supervisor:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+  dbMigration:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
+# Production environment settings
+app:
+  replicas: 2
+  nodeEnv: "production"
+  # Add production-specific environment variables
+  env:
+    NODE_ENV: "production"
+    LOG_LEVEL: "info"
+    # Add other production-specific env vars
+
+worker:
+  replicas: 2
+  nodeEnv: "production"
+  env:
+    NODE_ENV: "production"
+    LOG_LEVEL: "info"
+    # Add other production-specific env vars
+
+supervisor:
+  replicas: 2
+  nodeEnv: "production"
+  env:
+    NODE_ENV: "production"
+    LOG_LEVEL: "info"
+    # Add other production-specific env vars
+
+# Production ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+  hosts:
+    - host: trigger.your-domain.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: trigger-tls
+      hosts:
+        - trigger.your-domain.com
+
+# Enable RBAC
+rbac:
+  create: true
+
+# Create service account
+serviceAccount:
+  create: true
+  name: "trigger-dev"
+
+# Enable network policies
+networkPolicy:
+  enabled: true
+
+# Production database configuration
+database:
+  # Use secret for database credentials
+  connectionStringSecret: "trigger-db-secret"
+  sslMode: "verify-full"
+  poolMin: 5
+  poolMax: 20
+  connectionTimeout: 60
+  statementTimeout: 30000
+  idleTimeout: 10000
+  usePgBouncer: true
+
+# Production Redis configuration
+redis:
+  # Use secret for Redis credentials
+  secretName: "trigger-redis-secret"
+  tls: true
+  connectTimeout: 5000
+
+# Production database migration settings
+dbMigration:
+  enabled: true
+  backoffLimit: 3
+  timeout: 600
+  ttlSecondsAfterFinished: 3600
+  nodeEnv: "production"
+
+# Enable autoscaling
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+
+# Enable pod disruption budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Set priority class
+priorityClassName: "system-cluster-critical"
+
+# Configure topology spread constraints
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: DoNotSchedule
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/name: trigger-dev
+
+# Enable secret rotation
+secretRotation:
+  enabled: true
+  # Configure your secret rotation mechanism here 
