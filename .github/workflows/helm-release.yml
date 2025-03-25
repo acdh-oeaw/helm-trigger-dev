@@ -26,18 +26,48 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y yamllint
 
+      - name: Cache Helm dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/helm
+            ~/.config/helm
+          key: ${{ runner.os }}-helm-${{ hashFiles('**/Chart.yaml', '**/Chart.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-helm-
+
+      - name: Validate Chart.yaml
+        run: |
+          if [ ! -f Chart.yaml ]; then
+            echo "Error: Chart.yaml not found in root directory"
+            exit 1
+          fi
+          if ! grep -q "^version:" Chart.yaml; then
+            echo "Error: version field not found in Chart.yaml"
+            exit 1
+          fi
+          if ! grep -q "^name:" Chart.yaml; then
+            echo "Error: name field not found in Chart.yaml"
+            exit 1
+          fi
+
       - name: Lint Helm Chart
         run: |
-          cd helm-chart
           helm lint .
 
       - name: Run yamllint on rendered templates
         run: |
           helm template . | yamllint -d relaxed -
 
+      - name: Validate template rendering
+        run: |
+          helm template . > /dev/null || {
+            echo "Error: Failed to render Helm templates"
+            exit 1
+          }
+
       - name: Package Helm Chart
         run: |
-          cd helm-chart
           helm package .
 
       - name: Create Release
@@ -48,6 +78,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: |
-            helm-chart/*.tgz
+            *.tgz
           draft: false
-          prerelease: false 
+          prerelease: false
+          generate_release_notes: true
+          fail_on_unmatched_files: true 
