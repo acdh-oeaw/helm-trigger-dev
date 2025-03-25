@@ -1,0 +1,22 @@
+{{- if .Values.app.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "trigger-dev.app.name" . }}-config
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels: {{- include "trigger-dev.labels" . | nindent 4 }}
+    app.kubernetes.io/component: app
+data:
+  NODE_ENV: {{ .Values.app.nodeEnv | quote }}
+  TRIGGER_WORKLOAD_API_ENABLED: "false"
+  TRIGGER_DEQUEUE_ENABLED: "false"
+  KUBERNETES_FORCE_ENABLED: "true"
+  KUBERNETES_NAMESPACE: {{ .Values.namespace | default .Release.Namespace | quote }}
+  KUBERNETES_IMAGE_PULL_POLICY: "IfNotPresent"
+  DATABASE_CONNECTION_RETRIES: "5"
+  DATABASE_CONNECTION_RETRY_DELAY_MS: "2000"
+  REDIS_CONNECTION_RETRIES: "5"
+  REDIS_CONNECTION_RETRY_DELAY_MS: "2000"
+  HEALTH_CHECK_INTERVAL_MS: "10000"
+  HEALTH_CHECK_TIMEOUT_MS: "5000"
+{{- end }} 

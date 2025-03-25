@@ -1,6 +1,6 @@
 {{- include "trigger-dev.validateValues" . -}}
 {{- include "trigger-dev.generateSecrets" . -}}
----
+{{- if .Values.worker.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -10,9 +10,7 @@ metadata:
     {{- include "trigger-dev.labels" . | nindent 4 }}
     app.kubernetes.io/component: worker
 spec:
-  {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.worker.replicas }}
-  {{- end }}
   selector:
     matchLabels:
       {{- include "trigger-dev.selectorLabels" . | nindent 6 }}
@@ -52,31 +50,39 @@ spec:
         - name: {{ .Chart.Name }}-worker
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          {{- if .Values.image.digest }}
-          image: "{{ .Values.image.repository }}@{{ .Values.image.digest }}"
-          {{- else }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          {{- end }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: {{ include "trigger-dev.worker.image" . | quote }}
+          imagePullPolicy: {{ .Values.worker.image.pullPolicy }}
           env:
+            - name: NODE_ENV
+              value: {{ .Values.worker.nodeEnv | quote }}
             - name: HTTP_SERVER_DISABLED
               value: "true"
             - name: WORKER_ENABLED
               value: "true"
-            - name: EXECUTION_WORKER_ENABLED
-              value: "true"
-            - name: NODE_ENV
-              value: {{ .Values.worker.nodeEnv | quote }}
             - name: TRIGGER_API_URL
               value: "http://{{ include "trigger-dev.app.name" . }}:{{ .Values.service.port }}"
-            {{- include "trigger-dev.commonEnv" . | nindent 12 }}
-            {{- with .Values.worker.env }}
+            - name: KUBERNETES_FORCE_ENABLED
+              value: "true"
+            - name: KUBERNETES_NAMESPACE
+              value: "{{ .Values.namespace | default .Release.Namespace }}"
+            - name: KUBERNETES_IMAGE_PULL_POLICY
+              value: "IfNotPresent"
+            - name: DATABASE_CONNECTION_RETRIES
+              value: "5"
+            - name: DATABASE_CONNECTION_RETRY_DELAY_MS
+              value: "2000"
+            - name: REDIS_CONNECTION_RETRIES
+              value: "5"
+            - name: REDIS_CONNECTION_RETRY_DELAY_MS
+              value: "2000"
+            - name: HEALTH_CHECK_INTERVAL_MS
+              value: "10000"
+            - name: HEALTH_CHECK_TIMEOUT_MS
+              value: "5000"
+          {{- include "trigger-dev.commonEnv" . | nindent 12 }}
+          {{- with .Values.worker.env }}
             {{- toYaml . | nindent 12 }}
-            {{- end }}
-          ports:
-            - name: http
-              containerPort: {{ .Values.worker.service.port }}
-              protocol: TCP
+          {{- end }}
           {{- with .Values.worker.startupProbe }}
           startupProbe:
             {{- toYaml . | nindent 12 }}
@@ -127,4 +133,5 @@ spec:
   selector:
     {{- include "trigger-dev.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: worker
+{{- end }}
 {{- end }}

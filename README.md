@@ -192,6 +192,74 @@ The chart deploys:
 
 For detailed information about the system architecture and component interactions, see [ARCHITECTURE.md](./ARCHITECTURE.md).
 
+## Template Structure
+
+### External Dependencies
+
+This chart deploys stateless applications that rely on external services:
+
+#### Required External Services
+1. **Database**
+   - External PostgreSQL instance (e.g., Neon.tech)
+   - Configured via connection string in values.yaml
+   - Used for persistent data storage
+
+2. **Redis**
+   - External Redis instance
+   - Configured via connection string in values.yaml
+   - Used for job queue and caching
+
+3. **File Storage**
+   - All file storage is handled by external services
+   - No local volumes required
+
+### Architecture Notes
+- All components are stateless and can be scaled horizontally
+- No persistent volumes are required
+- External services are configured via connection strings in values.yaml
+- Database migrations are handled via one-time jobs
+
+### Directory Structure
+
+- `app/` - Main application components
+  - `deployment.yaml` - Main application deployment
+  - `service.yaml` - Application service
+  - `configmap.yaml` - Non-sensitive configuration
+  - `hpa.yaml` - Horizontal Pod Autoscaling
+  - `pdb.yaml` - Pod Disruption Budget
+
+- `worker/` - Background worker components
+  - `deployment.yaml` - Worker deployment
+
+- `supervisor/` - Supervisor service components
+  - `deployment.yaml` - Supervisor deployment
+  - `service.yaml` - Supervisor service
+
+- `database/` - Database-related components
+  - `db-migrate-job.yaml` - Database migration job
+
+- `networking/` - Network-related components
+  - `ingress.yaml` - Ingress configuration
+  - `network-policy.yaml` - Network policies
+
+- `security/` - Security-related components
+  - `rbac.yaml` - Role-Based Access Control
+  - `serviceaccount.yaml` - Service account definitions
+
+### Common Templates
+
+- `_helpers.tpl` - Common template helpers and functions
+- `_quickstart.tpl` - Quickstart guide template
+- `NOTES.txt` - Post-installation notes
+
+### Best Practices
+
+1. All templates should use the common labels defined in `_helpers.tpl`
+2. Sensitive data should be stored in Kubernetes secrets
+3. Non-sensitive configuration should use ConfigMaps
+4. Use conditional rendering with `if` statements for optional components
+5. Follow Kubernetes naming conventions and best practices
+
 ## Troubleshooting
 
 ### Common Issues

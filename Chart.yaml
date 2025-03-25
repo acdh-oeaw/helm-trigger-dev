@@ -1,45 +1,33 @@
 apiVersion: v2
 name: trigger-dev
-description: A Helm chart for Trigger.dev. Uses 'trigger-dev' as the default namespace and GitHub Container Registry (ghcr.io) for images with mode-specific supervisor containers.
+description: A Helm chart for Trigger.dev - an open-source platform for creating event-driven background tasks and workflows
 type: application
 version: 3.3.18
 appVersion: "3.3.18"
-# This chart supports Trigger.dev version 3.3.x
-maintainers:
-  - name: Andy
-    url: https://github.com/hongkongkiwi
+icon: https://raw.githubusercontent.com/triggerdotdev/trigger.dev/main/apps/web/public/icon.png
 keywords:
   - trigger.dev
-  - automation
   - workflow
+  - automation
   - background-jobs
   - event-driven
-# Dependencies section removed as we're using external Redis and PostgreSQL
+  - kubernetes
+  - jobs
+  - tasks
+home: https://trigger.dev
 sources:
   - https://github.com/triggerdotdev/trigger.dev
-home: https://trigger.dev
-icon: https://trigger.dev/favicon-light.png
+  - https://github.com/hongkongkiwi/helm-trigger-dev
+maintainers:
+  - name: hongkongkiwi
+    url: https://github.com/hongkongkiwi
+kubeVersion: ">=1.19.0-0"
 annotations:
-  artifacthub.io/links: |
-    - name: Documentation
-      url: https://trigger.dev/docs
-    - name: Discord
-      url: https://discord.gg/JtBAxBr2m3
-    - name: Twitter
-      url: https://twitter.com/triggerdotdev
-  artifacthub.io/screenshots: |
-    - title: Trigger.dev Dashboard
-      url: https://trigger.dev/images/og-image.png
-  # Acknowledge the original application developers
-  artifacthub.io/contributors: |
-    - name: Matt Aitken
-      url: https://github.com/matt-aitken
-    - name: Eric Allam
-      url: https://github.com/ericallam
-    - name: Samuel Evenson
-      url: https://github.com/samejr
-  # Add version compatibility information
-  artifacthub.io/compatibility: |
-    - type: application
-      name: trigger.dev
-      version: "3.3.x" 
+  artifacthub.io/license: MIT
+  artifacthub.io/prerelease: "false"
+  artifacthub.io/containsSecurityUpdates: "false"
+  artifacthub.io/changes: |
+    - Added comprehensive validation rules
+    - Enhanced security context settings
+    - Improved documentation
+    - Added production-ready configurations

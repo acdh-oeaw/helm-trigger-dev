@@ -48,79 +48,41 @@ spec:
         - name: {{ .Chart.Name }}-supervisor
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-{{- if eq .Values.supervisor.mode "coordinator" }}
-  {{- if .Values.coordinatorImage.digest }}
-          image: "{{ .Values.coordinatorImage.repository }}@{{ .Values.coordinatorImage.digest }}"
-  {{- else }}
-          image: "{{ .Values.coordinatorImage.repository }}:{{ .Values.coordinatorImage.tag | default .Chart.AppVersion }}"
-  {{- end }}
-          imagePullPolicy: {{ .Values.coordinatorImage.pullPolicy }}
-{{- else if eq .Values.supervisor.mode "provider" }}
-  {{- if .Values.kubernetesProviderImage.digest }}
-          image: "{{ .Values.kubernetesProviderImage.repository }}@{{ .Values.kubernetesProviderImage.digest }}"
-  {{- else }}
-          image: "{{ .Values.kubernetesProviderImage.repository }}:{{ .Values.kubernetesProviderImage.tag | default .Chart.AppVersion }}"
-  {{- end }}
-          imagePullPolicy: {{ .Values.kubernetesProviderImage.pullPolicy }}
-{{- else }}
-  {{- if .Values.supervisorImage.digest }}
-          image: "{{ .Values.supervisorImage.repository }}@{{ .Values.supervisorImage.digest }}"
-  {{- else }}
-          image: "{{ .Values.supervisorImage.repository }}:{{ .Values.supervisorImage.tag | default .Chart.AppVersion }}"
-  {{- end }}
+          image: {{ include "trigger-dev.supervisor.image" . | quote }}
           imagePullPolicy: {{ .Values.supervisorImage.pullPolicy }}
-{{- end }}
           env:
             - name: NODE_ENV
               value: {{ .Values.supervisor.nodeEnv | quote }}
+            - name: HTTP_SERVER_DISABLED
+              value: "true"
+            - name: SUPERVISOR_ENABLED
+              value: "true"
+            - name: SUPERVISOR_MODE
+              value: {{ .Values.supervisor.mode | quote }}
             - name: TRIGGER_API_URL
               value: "http://{{ include "trigger-dev.app.name" . }}:{{ .Values.service.port }}"
-            # Workload API settings (coordinator mode)
-            - name: TRIGGER_WORKLOAD_API_ENABLED
-              value: {{- if or (eq .Values.supervisor.mode "coordinator") (eq .Values.supervisor.mode "both") }} "true" {{- else }} "false" {{- end }}
-            - name: TRIGGER_WORKLOAD_API_PROTOCOL
-              value: "http"
-            - name: TRIGGER_WORKLOAD_API_PORT_INTERNAL
-              value: "{{ .Values.supervisor.service.port }}"
-            - name: TRIGGER_WORKLOAD_API_PORT_EXTERNAL
-              value: "{{ .Values.supervisor.service.port }}"
-            # Dequeue settings (provider mode)
-            - name: TRIGGER_DEQUEUE_ENABLED
-              value: {{- if or (eq .Values.supervisor.mode "provider") (eq .Values.supervisor.mode "both") }} "true" {{- else }} "false" {{- end }}
-            - name: TRIGGER_DEQUEUE_INTERVAL_MS
-              value: "{{ .Values.supervisor.workloadApi.dequeueIntervalMs }}"
-            # Kubernetes settings
             - name: KUBERNETES_FORCE_ENABLED
               value: "true"
             - name: KUBERNETES_NAMESPACE
               value: "{{ .Values.namespace | default .Release.Namespace }}"
             - name: KUBERNETES_IMAGE_PULL_POLICY
               value: "IfNotPresent"
-            # Connection retry settings
             - name: DATABASE_CONNECTION_RETRIES
               value: "5"
             - name: DATABASE_CONNECTION_RETRY_DELAY_MS
               value: "2000"
             - name: REDIS_CONNECTION_RETRIES
-              value: "5" 
+              value: "5"
             - name: REDIS_CONNECTION_RETRY_DELAY_MS
               value: "2000"
-            # Health check settings
             - name: HEALTH_CHECK_INTERVAL_MS
               value: "10000"
-            - name: HEALTH_CHECK_TIMEOUT_MS 
+            - name: HEALTH_CHECK_TIMEOUT_MS
               value: "5000"
-            # Configure task running
-            - name: MAX_TASK_RETRY_ATTEMPTS
-              value: "3"
-            {{- include "trigger-dev.commonEnv" . | nindent 12 }}
-            {{- with .Values.supervisor.env }}
+          {{- include "trigger-dev.commonEnv" . | nindent 12 }}
+          {{- with .Values.supervisor.env }}
             {{- toYaml . | nindent 12 }}
-            {{- end }}
-          ports:
-            - name: http
-              containerPort: {{ .Values.supervisor.service.port }}
-              protocol: TCP
+          {{- end }}
           {{- with .Values.supervisor.startupProbe }}
           startupProbe:
             {{- toYaml . | nindent 12 }}

@@ -2,71 +2,70 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+# =============================================================================
+# Global Settings
+# These settings apply to all components unless overridden
+# =============================================================================
+
 # Namespace configuration
-# Set createNamespace to true if you want to automatically create a new namespace
-createNamespace: false
 namespace: "trigger-dev"
+createNamespace: false  # Set to true to automatically create namespace
 
-# Quick start mode - when enabled, generates secure random secrets for internal auth and dashboard
-# Recommended: Keep enabled for initial setup and testing
+# Quick start mode configuration
 quickstart:
-  enabled: true
-  # Note: For production, consider disabling quickstart and managing your own secrets
+  enabled: true  # Set to false for production deployments
+  # WARNING: In production, disable quickstart and manage your own secrets
 
-# Common image settings
-# These settings apply to the main application image
+# =============================================================================
+# Image Settings
+# Configuration for container images used by all components
+# =============================================================================
+
 image:
   repository: ghcr.io/triggerdotdev/trigger.dev
-  tag: "3.3.18"  # Set default to match appVersion instead of "latest"
+  tag: "3.3.18"  # Should match appVersion
   pullPolicy: IfNotPresent
-  # Optional digest for image verification
-  # For production, consider using image digests for immutability
+  # For production, use image digest for immutability
   digest: ""
 
-# Supervisor image settings
-# Used when supervisor.mode is set to "both"
 supervisorImage:
   repository: ghcr.io/triggerdotdev/supervisor
-  tag: "3.3.18"  # Set default to match appVersion instead of "latest"
+  tag: "3.3.18"
   pullPolicy: IfNotPresent
-  # Optional digest for image verification
   digest: ""
 
-# Coordinator image settings (for Supervisor in coordinator mode)
-# Used when supervisor.mode is set to "coordinator" (default)
 coordinatorImage:
   repository: ghcr.io/triggerdotdev/coordinator
-  tag: "3.3.18"  # Set default to match appVersion instead of "latest"
+  tag: "3.3.18"
   pullPolicy: IfNotPresent
-  # Optional digest for image verification
   digest: ""
 
-# Kubernetes provider image settings
-# Used when supervisor.mode is set to "provider"
 kubernetesProviderImage:
   repository: ghcr.io/triggerdotdev/provider/kubernetes
-  tag: "3.3.18"  # Set default to match appVersion instead of "latest"
+  tag: "3.3.18"
   pullPolicy: IfNotPresent
-  # Optional digest for image verification
   digest: ""
 
-# ImagePullSecrets configuration
+# Registry access configuration
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+# =============================================================================
+# Security Settings
+# Global security configurations for all pods
+# =============================================================================
+
 # Pod Security Context
-# These settings apply to all pods
 podSecurityContext:
   fsGroup: 1000
   runAsUser: 1000
   runAsNonRoot: true
-  # For more restrictive production settings, consider enabling:
+  # Production recommended settings:
   # seccompProfile:
   #   type: RuntimeDefault
 
 # Container Security Context
-# These settings apply to all containers
 securityContext:
   allowPrivilegeEscalation: false
   runAsNonRoot: true
@@ -74,44 +73,180 @@ securityContext:
   capabilities:
     drop:
       - ALL
-  # For production, consider enabling:
+  # Production recommended:
   # readOnlyRootFilesystem: true
 
-# Resource settings for components
-# Adjust these values based on your workload requirements
+# =============================================================================
+# Resource Management
+# Default resource settings for all components
+# =============================================================================
+
 resources:
   app:
     requests:
       cpu: 100m
       memory: 256Mi
+    # Production recommended:
     # limits:
+    #   cpu: 500m
     #   memory: 512Mi
   worker:
     requests:
       cpu: 100m
       memory: 256Mi
-    # limits:
-    #   memory: 512Mi
   supervisor:
     requests:
       cpu: 100m
       memory: 256Mi
-    # limits:
-    #   memory: 512Mi
   dbMigration:
     requests:
       cpu: 100m
       memory: 256Mi
-    # limits:
-    #   memory: 512Mi
 
-# Global environment variables (applied to all deployments)
-env: {}
+# =============================================================================
+# Component Configuration
+# Settings specific to each component
+# =============================================================================
+
+# Application Component
+app:
+  enabled: true
+  replicas: 1  # Set higher for production
+  nodeEnv: "production"
+  
+  # Service configuration
+  service:
+    enabled: true
+    type: ClusterIP
+    port: 3000
+    annotations: {}
+  
+  # Pod configuration
+  podLabels: {}
+  podAnnotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  
+  # Health check configuration
+  startupProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 6
+  
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: http
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+  
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: http
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+
+# Worker Component
+worker:
+  enabled: true
+  replicas: 1
+  nodeEnv: "production"
+  # ... [similar structure to app component]
+
+# Supervisor Component
+supervisor:
+  enabled: true
+  replicas: 1
+  mode: coordinator  # Options: coordinator, provider, both
+  nodeEnv: "production"
+  # ... [similar structure to app component]
+
+# =============================================================================
+# External Dependencies
+# Configuration for required external services
+# =============================================================================
+
+# Database Configuration
+database:
+  # Connection details
+  externalHost: your-neon-db-host.neon.tech
+  externalPort: 5432
+  externalDatabase: postgres
+  externalUser: postgres
+  externalPassword: postgres  # Use secrets in production
+  
+  # Connection options
+  sslMode: require
+  poolMin: 0
+  poolMax: 10
+  connectionTimeout: 60
+  statementTimeout: 30000
+  idleTimeout: 10000
+  usePgBouncer: false
+  
+  # Production recommended:
+  # connectionStringSecret: "trigger-db-secret"
+
+# Redis Configuration
+redis:
+  url: redis://username:password@host:port
+  tls: false
+  connectTimeout: 5000
+  # Production recommended:
+  # secretName: "trigger-redis-secret"
+
+# =============================================================================
+# Production Features
+# Settings typically used in production environments
+# =============================================================================
+
+# Network Policies
+networkPolicy:
+  enabled: false  # Enable in production
+
+# Autoscaling
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: false
+  # minAvailable: 1
+
+# Priority Class
+priorityClassName: ""
+
+# Topology Spread Constraints
+topologySpreadConstraints: []
+
+# Secret Rotation
+secretRotation:
+  enabled: false
+  documentation: "Use external secret management in production"
 
 # App component configuration
 app:
   enabled: true
   replicas: 1
+  service:
+    enabled: true
+    type: ClusterIP
+    port: 3000
+    annotations: {}
   podLabels: {}
   podAnnotations: {}
   nodeSelector: {}
@@ -119,8 +254,6 @@ app:
   affinity: {}
   # Additional environment variables for app deployment
   env: {}
-  # Port configuration
-  port: 3000
   # Node environment setting
   nodeEnv: "production"
   # Support for init containers
@@ -159,6 +292,11 @@ app:
 worker:
   enabled: true
   replicas: 1
+  image:
+    repository: ghcr.io/triggerdotdev/trigger.dev
+    tag: "3.3.18"
+    pullPolicy: IfNotPresent
+    digest: ""
   podLabels: {}
   podAnnotations: {}
   nodeSelector: {}
@@ -300,71 +438,6 @@ serviceAccount:
   create: true
   name: ""
   annotations: {}
-
-# Network Policy Configuration
-# Enable to restrict pod traffic
-networkPolicy:
-  enabled: false
-  # Production recommendation: set to true and configure appropriate policies
-
-# External Database configuration
-database:
-  # External PostgreSQL connection details
-  # This chart requires an external PostgreSQL database like Neon (https://neon.tech)
-  # REQUIRED: Update these values with your database credentials
-  # PRODUCTION: Use database.connectionStringSecret instead for better security
-  externalHost: your-neon-db-host.neon.tech  # Example: db.abcdefg.supabase.co or mydb.123456.us-east-1.neon.tech
-  externalPort: 5432
-  externalDatabase: postgres
-  externalUser: postgres
-  externalPassword: postgres  # Consider using a secret for production
-  sslMode: require  # Options: disable, allow, prefer, require, verify-ca, verify-full
-  
-  # Connection pool settings
-  poolMin: 0
-  poolMax: 10
-  
-  # Timeout settings
-  connectionTimeout: 60  # In seconds
-  statementTimeout: 30000  # In milliseconds
-  idleTimeout: 10000  # In milliseconds
-  
-  # Use PgBouncer for connection pooling
-  usePgBouncer: false
-  
-  # Additional database parameters
-  additionalParams: {}
-  
-  # Alternative: Use an existing Kubernetes secret containing the database URL
-  # This is the recommended approach for production environments
-  # The secret should have DATABASE_URL and DIRECT_URL keys
-  connectionStringSecret: ""
-  # Example with external secret creation:
-  # kubectl create secret generic trigger-db-secret \
-  #   --from-literal=DATABASE_URL="postgres://user:password@your-host:5432/postgres?sslmode=require" \
-  #   --from-literal=DIRECT_URL="postgres://user:password@your-host:5432/postgres?sslmode=require"
-
-# Redis configuration
-# This chart requires an external Redis instance like Upstash (https://upstash.com)
-redis:
-  # REQUIRED: Update this value with your Redis URL
-  # Format: redis://username:password@host:port
-  # or rediss://username:password@host:port for TLS
-  url: redis://username:password@host:port
-  
-  # Enable TLS for Redis connection
-  tls: false
-  
-  # Connection timeout in milliseconds
-  connectTimeout: 5000
-  
-  # Alternative: Use an existing Kubernetes secret containing the Redis URL
-  # This is the recommended approach for production environments
-  # The secret should have a REDIS_URL key
-  secretName: ""
-  # Example with external secret creation:
-  # kubectl create secret generic trigger-redis-secret \
-  #   --from-literal=REDIS_URL="redis://username:password@your-redis-host:port"
 
 # Database migration job configuration
 dbMigration:

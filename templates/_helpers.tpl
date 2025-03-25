@@ -37,6 +37,64 @@ Validate required values
 {{- if and .Values.supervisor.enabled (not .Values.resources.supervisor) -}}
 {{- fail "resources.supervisor is required when supervisor is enabled" -}}
 {{- end -}}
+
+{{/* Image validation */}}
+{{- if and (not .Values.image.digest) (eq .Values.image.tag "") -}}
+{{- fail "Either image.tag or image.digest must be specified" -}}
+{{- end -}}
+
+{{/* Production mode validations */}}
+{{- if not .Values.quickstart.enabled -}}
+  {{/* TLS validation for production */}}
+  {{- if and .Values.ingress.enabled (not .Values.ingress.tls) -}}
+    {{- fail "TLS must be configured for production ingress" -}}
+  {{- end -}}
+
+  {{/* Security context validation */}}
+  {{- if not .Values.podSecurityContext.runAsNonRoot -}}
+    {{- fail "podSecurityContext.runAsNonRoot should be enabled in production" -}}
+  {{- end -}}
+
+  {{/* Resource limits validation */}}
+  {{- if not (and .Values.resources.app.limits .Values.resources.worker.limits .Values.resources.supervisor.limits) -}}
+    {{- fail "Resource limits should be set for all components in production" -}}
+  {{- end -}}
+
+  {{/* High availability validation */}}
+  {{- if eq (int .Values.app.replicas) 1 -}}
+    {{- fail "Multiple replicas recommended for production deployments" -}}
+  {{- end -}}
+{{- end -}}
+
+{{/* Network policy validation */}}
+{{- if and (not .Values.quickstart.enabled) (not .Values.networkPolicy.enabled) -}}
+{{- fail "Network policies should be enabled in production" -}}
+{{- end -}}
+
+{{/* Database SSL mode validation */}}
+{{- if and (not .Values.quickstart.enabled) (eq .Values.database.sslMode "disable") -}}
+{{- fail "SSL should be enabled for database connections in production" -}}
+{{- end -}}
+
+{{/* Redis TLS validation */}}
+{{- if and (not .Values.quickstart.enabled) (not .Values.redis.tls) -}}
+{{- fail "TLS should be enabled for Redis connections in production" -}}
+{{- end -}}
+
+{{/* Pod disruption budget validation */}}
+{{- if and (not .Values.quickstart.enabled) (not .Values.podDisruptionBudget.enabled) -}}
+{{- fail "Pod disruption budget should be enabled in production" -}}
+{{- end -}}
+
+{{/* Probe validation */}}
+{{- if or (not .Values.app.livenessProbe) (not .Values.app.readinessProbe) -}}
+{{- fail "Both liveness and readiness probes should be configured" -}}
+{{- end -}}
+
+{{/* Service account validation */}}
+{{- if and .Values.rbac.create (not .Values.serviceAccount.create) -}}
+{{- fail "Service account must be created when RBAC is enabled" -}}
+{{- end -}}
 {{- end -}}
 
 {{/*
@@ -297,4 +355,81 @@ Common environment variables used across deployments
 {{- with .Values.env }}
 {{- toYaml . }}
 {{- end }}
+{{- end -}}
+
+{{/*
+Get app image configuration
+*/}}
+{{- define "trigger-dev.app.image" -}}
+{{- if .Values.image.digest }}
+{{- printf "%s@%s" .Values.image.repository .Values.image.digest }}
+{{- else }}
+{{- printf "%s:%s" .Values.image.repository (.Values.image.tag | default .Chart.AppVersion) }}
+{{- end }}
+{{- end }}
+
+{{/*
+Get worker image configuration
+*/}}
+{{- define "trigger-dev.worker.image" -}}
+{{- if .Values.worker.image.digest }}
+{{- printf "%s@%s" .Values.worker.image.repository .Values.worker.image.digest }}
+{{- else }}
+{{- printf "%s:%s" .Values.worker.image.repository (.Values.worker.image.tag | default .Chart.AppVersion) }}
+{{- end }}
+{{- end }}
+
+{{/*
+Get supervisor image configuration based on mode
+*/}}
+{{- define "trigger-dev.supervisor.image" -}}
+{{- if eq .Values.supervisor.mode "coordinator" }}
+  {{- if .Values.coordinatorImage.digest }}
+  {{- printf "%s@%s" .Values.coordinatorImage.repository .Values.coordinatorImage.digest }}
+  {{- else }}
+  {{- printf "%s:%s" .Values.coordinatorImage.repository (.Values.coordinatorImage.tag | default .Chart.AppVersion) }}
+  {{- end }}
+{{- else if eq .Values.supervisor.mode "provider" }}
+  {{- if .Values.kubernetesProviderImage.digest }}
+  {{- printf "%s@%s" .Values.kubernetesProviderImage.repository .Values.kubernetesProviderImage.digest }}
+  {{- else }}
+  {{- printf "%s:%s" .Values.kubernetesProviderImage.repository (.Values.kubernetesProviderImage.tag | default .Chart.AppVersion) }}
+  {{- end }}
+{{- else }}
+  {{- if .Values.supervisorImage.digest }}
+  {{- printf "%s@%s" .Values.supervisorImage.repository .Values.supervisorImage.digest }}
+  {{- else }}
+  {{- printf "%s:%s" .Values.supervisorImage.repository (.Values.supervisorImage.tag | default .Chart.AppVersion) }}
+  {{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Validate image configuration
+*/}}
+{{- define "trigger-dev.validateImage" -}}
+{{- $imageConfig := . -}}
+{{- if and (not $imageConfig.digest) (eq $imageConfig.tag "") -}}
+{{- fail "Either tag or digest must be specified for image" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Validate resource configuration
+*/}}
+{{- define "trigger-dev.validateResources" -}}
+{{- $resourceConfig := . -}}
+{{- if not (and $resourceConfig.requests $resourceConfig.requests.cpu $resourceConfig.requests.memory) -}}
+{{- fail "Resource requests must specify both CPU and memory" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Validate probe configuration
+*/}}
+{{- define "trigger-dev.validateProbe" -}}
+{{- $probe := . -}}
+{{- if not (and $probe.periodSeconds $probe.timeoutSeconds $probe.successThreshold $probe.failureThreshold) -}}
+{{- fail "Probe must specify all timing parameters" -}}
+{{- end -}}
 {{- end -}} 

@@ -1,0 +1,53 @@
+name: Helm Chart Release
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.12.0
+
+      - name: Install yamllint
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y yamllint
+
+      - name: Lint Helm Chart
+        run: |
+          cd helm-chart
+          helm lint .
+
+      - name: Run yamllint on rendered templates
+        run: |
+          helm template . | yamllint -d relaxed -
+
+      - name: Package Helm Chart
+        run: |
+          cd helm-chart
+          helm package .
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: |
+            helm-chart/*.tgz
+          draft: false
+          prerelease: false 
