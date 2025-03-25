@@ -1,152 +1,154 @@
 # Complete configuration template with all possible options
 # Copy this file to values.yaml and customize as needed
+# Values marked with [DEFAULT] indicate the value that will be used if not specified
 
 # Global Settings
-namespace: "trigger-dev"
-createNamespace: true
+namespace: "trigger-dev"  # [DEFAULT: Release.Namespace]
+createNamespace: true     # [DEFAULT: false]
 
 # Image Settings
 image:
-  repository: ghcr.io/triggerdotdev/trigger.dev
-  tag: "v{{ .Chart.Version }}"
-  pullPolicy: IfNotPresent
-  digest: ""
+  repository: ghcr.io/triggerdotdev/trigger.dev  # [DEFAULT: ghcr.io/triggerdotdev/trigger.dev]
+  tag: "v{{ .Chart.Version }}"                   # [DEFAULT: latest]
+  pullPolicy: IfNotPresent                       # [DEFAULT: IfNotPresent]
+  digest: ""                                     # [DEFAULT: ""]
 
 # Security Settings
 podSecurityContext:
-  fsGroup: 1000
-  runAsUser: 1000
-  runAsNonRoot: true
+  fsGroup: 1000                # [DEFAULT: 1000]
+  runAsUser: 1000             # [DEFAULT: 1000]
+  runAsNonRoot: true          # [DEFAULT: true]
 
 securityContext:
-  allowPrivilegeEscalation: false
-  runAsNonRoot: true
-  runAsUser: 1000
+  allowPrivilegeEscalation: false  # [DEFAULT: false]
+  runAsNonRoot: true              # [DEFAULT: true]
+  runAsUser: 1000                 # [DEFAULT: 1000]
   capabilities:
-    drop:
+    drop:                         # [DEFAULT: ["ALL"]]
       - ALL
 
 # Resource Management
 resources:
   app:
     requests:
-      cpu: 100m
-      memory: 256Mi
+      cpu: 100m        # [DEFAULT: 100m]
+      memory: 256Mi    # [DEFAULT: 128Mi]
     limits:
-      cpu: 500m
-      memory: 512Mi
+      cpu: 500m        # [DEFAULT: 500m]
+      memory: 512Mi    # [DEFAULT: 512Mi]
   worker:
     requests:
-      cpu: 100m
-      memory: 256Mi
+      cpu: 100m        # [DEFAULT: 100m]
+      memory: 256Mi    # [DEFAULT: 128Mi]
     limits:
-      cpu: 500m
-      memory: 512Mi
+      cpu: 500m        # [DEFAULT: 500m]
+      memory: 512Mi    # [DEFAULT: 512Mi]
 
 # Database Configuration
 database:
   # Option 1: Use connection string secret
-  connectionStringSecret: "trigger-db-secret"
+  connectionStringSecret: "trigger-db-secret"  # [DEFAULT: ""]
   
   # Option 2: Direct connection details
-  externalHost: "your-db-host"
-  externalPort: 5432
-  externalDatabase: "postgres"
-  externalUser: "postgres"
-  externalPassword: "your-password"
+  externalHost: "your-db-host"     # [DEFAULT: localhost]
+  externalPort: 5432               # [DEFAULT: 5432]
+  externalDatabase: "postgres"     # [DEFAULT: trigger]
+  externalUser: "postgres"         # [DEFAULT: trigger]
+  externalPassword: "your-password" # [DEFAULT: trigger]
   
   # Connection options
-  sslMode: "require"
-  poolMin: 0
-  poolMax: 10
-  connectionTimeout: 60
-  statementTimeout: 30000
-  idleTimeout: 10000
-  usePgBouncer: false
+  sslMode: "require"              # [DEFAULT: not set]
+  poolMin: 0                      # [DEFAULT: not set]
+  poolMax: 10                     # [DEFAULT: not set]
+  connectionTimeout: 60           # [DEFAULT: not set]
+  statementTimeout: 30000         # [DEFAULT: not set]
+  idleTimeout: 10000             # [DEFAULT: not set]
+  usePgBouncer: false            # [DEFAULT: false]
 
 # Redis Configuration
 redis:
   # Option 1: Direct URL
-  url: "redis://your-redis-host:6379"
+  url: "redis://your-redis-host:6379"  # [DEFAULT: redis://localhost:6379]
   
   # Option 2: Use secret
-  secretName: "trigger-redis-secret"
+  secretName: "trigger-redis-secret"    # [DEFAULT: ""]
   
   # Connection options
-  tls: false
-  connectTimeout: 5000
+  tls: false                           # [DEFAULT: false]
+  connectTimeout: 5000                 # [DEFAULT: not set]
 
 # Component Configuration
 app:
-  enabled: true
-  replicas: 1
-  nodeEnv: "production"
+  enabled: true                # [DEFAULT: true]
+  replicas: 1                 # [DEFAULT: 1]
+  nodeEnv: "production"       # [DEFAULT: production]
   service:
-    enabled: true
-    type: ClusterIP
-    port: 3000
-  env: {}
-  podLabels: {}
-  podAnnotations: {}
+    enabled: true            # [DEFAULT: true]
+    type: ClusterIP         # [DEFAULT: ClusterIP]
+    port: 3000              # [DEFAULT: 3000]
+  env: {}                    # [DEFAULT: {}]
+  podLabels: {}             # [DEFAULT: {}]
+  podAnnotations: {}        # [DEFAULT: {}]
 
 worker:
-  enabled: true
-  replicas: 1
-  nodeEnv: "production"
+  enabled: true             # [DEFAULT: true]
+  replicas: 1              # [DEFAULT: 1]
+  nodeEnv: "production"    # [DEFAULT: production]
   service:
-    enabled: false
-    type: ClusterIP
-    port: 3000
-  env: {}
-  podLabels: {}
-  podAnnotations: {}
+    enabled: false         # [DEFAULT: false]
+    type: ClusterIP       # [DEFAULT: ClusterIP]
+    port: 3000            # [DEFAULT: 3000]
+  env: {}                  # [DEFAULT: {}]
+  podLabels: {}           # [DEFAULT: {}]
+  podAnnotations: {}      # [DEFAULT: {}]
 
 supervisor:
-  enabled: true
-  replicas: 1
-  mode: "coordinator"
-  nodeEnv: "production"
+  enabled: true           # [DEFAULT: false]
+  replicas: 1            # [DEFAULT: 1]
+  mode: "coordinator"     # [DEFAULT: both]
+  nodeEnv: "production"  # [DEFAULT: production]
   service:
-    type: ClusterIP
-    port: 8020
-  env: {}
-  podLabels: {}
-  podAnnotations: {}
+    type: ClusterIP     # [DEFAULT: ClusterIP]
+    port: 8020         # [DEFAULT: 8020]
+  env: {}               # [DEFAULT: {}]
+  podLabels: {}        # [DEFAULT: {}]
+  podAnnotations: {}   # [DEFAULT: {}]
 
 # Production Features
 networkPolicy:
-  enabled: false
+  enabled: false        # [DEFAULT: true]
 
 autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 3
-  targetCPUUtilizationPercentage: 80
+  enabled: false       # [DEFAULT: false]
+  minReplicas: 1      # [DEFAULT: 1]
+  maxReplicas: 3      # [DEFAULT: 100]
+  targetCPUUtilizationPercentage: 80    # [DEFAULT: 80]
+  targetMemoryUtilizationPercentage: 80 # [DEFAULT: 80]
 
 podDisruptionBudget:
-  enabled: false
-  minAvailable: 1
+  enabled: false      # [DEFAULT: true]
+  minAvailable: 1    # [DEFAULT: 1]
 
-priorityClassName: ""
+priorityClassName: "" # [DEFAULT: ""]
 
-topologySpreadConstraints: []
+topologySpreadConstraints: [] # [DEFAULT: []]
 
 # Ingress Configuration
 ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-  hosts:
+  enabled: false           # [DEFAULT: false]
+  className: ""           # [DEFAULT: ""]
+  annotations: {}         # [DEFAULT: {}]
+  hosts:                  # [DEFAULT: []]
     - host: chart-example.local
       paths:
         - path: /
           pathType: ImplementationSpecific
-  tls: []
+  tls: []                # [DEFAULT: []]
 
 # RBAC Configuration
 rbac:
-  create: true
-  rules:
+  create: true           # [DEFAULT: true]
+  rules:                # [DEFAULT: shown below]
     - apiGroups: [""]
       resources: ["pods", "pods/log", "pods/exec", "configmaps", "secrets", "events"]
       verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
@@ -156,17 +158,24 @@ rbac:
 
 # Service Account Configuration
 serviceAccount:
-  create: true
-  name: ""
-  annotations: {}
+  create: true          # [DEFAULT: true]
+  name: ""             # [DEFAULT: ""]
+  annotations: {}      # [DEFAULT: {}]
 
 # Database Migration Configuration
 dbMigration:
-  enabled: true
-  backoffLimit: 3
-  timeout: 600
-  ttlSecondsAfterFinished: 3600
-  nodeEnv: "production"
-  podLabels: {}
-  podAnnotations: {}
-  env: {} 
+  enabled: true                    # [DEFAULT: true]
+  backoffLimit: 3                  # [DEFAULT: not set]
+  timeout: 600                     # [DEFAULT: not set]
+  ttlSecondsAfterFinished: 3600   # [DEFAULT: not set]
+  nodeEnv: "production"           # [DEFAULT: production]
+  podLabels: {}                   # [DEFAULT: {}]
+  podAnnotations: {}              # [DEFAULT: {}]
+  env: {}                         # [DEFAULT: {}]
+  resources:                      # [DEFAULT: shown below]
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi 

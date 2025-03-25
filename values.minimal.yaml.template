@@ -1,11 +1,47 @@
 # Minimal configuration for quick start
 # Copy this file to values.yaml and customize as needed
+# Commented values show defaults that will be used if not specified
+
+# Global Settings
+# namespace: "trigger-dev"  # [DEFAULT: Release.Namespace]
+# createNamespace: false    # [DEFAULT: false]
 
 # Image Settings
 image:
   repository: ghcr.io/triggerdotdev/trigger.dev
   tag: "v{{ .Chart.Version }}"  # Uses chart version
-  pullPolicy: IfNotPresent
+  pullPolicy: IfNotPresent     # [DEFAULT: IfNotPresent]
+  # digest: ""                 # [DEFAULT: ""]
+
+# Security Settings (using secure defaults)
+# podSecurityContext:
+#   fsGroup: 1000            # [DEFAULT: 1000]
+#   runAsUser: 1000         # [DEFAULT: 1000]
+#   runAsNonRoot: true      # [DEFAULT: true]
+
+# securityContext:
+#   allowPrivilegeEscalation: false  # [DEFAULT: false]
+#   runAsNonRoot: true              # [DEFAULT: true]
+#   runAsUser: 1000                 # [DEFAULT: 1000]
+#   capabilities:
+#     drop: ["ALL"]                 # [DEFAULT: ["ALL"]]
+
+# Resource Management (using default limits)
+# resources:
+#   app:
+#     requests:
+#       cpu: 100m          # [DEFAULT: 100m]
+#       memory: 128Mi      # [DEFAULT: 128Mi]
+#     limits:
+#       cpu: 500m          # [DEFAULT: 500m]
+#       memory: 512Mi      # [DEFAULT: 512Mi]
+#   worker:
+#     requests:
+#       cpu: 100m          # [DEFAULT: 100m]
+#       memory: 128Mi      # [DEFAULT: 128Mi]
+#     limits:
+#       cpu: 500m          # [DEFAULT: 500m]
+#       memory: 512Mi      # [DEFAULT: 512Mi]
 
 # Database configuration (required)
 database:
@@ -14,10 +50,16 @@ database:
   externalDatabase: "postgres"
   externalUser: "postgres"
   externalPassword: "your-password"
+  # sslMode: "require"     # [DEFAULT: not set]
+  # poolMin: 0             # [DEFAULT: not set]
+  # poolMax: 10            # [DEFAULT: not set]
+  # usePgBouncer: false   # [DEFAULT: false]
 
 # Redis configuration (required)
 redis:
   url: "redis://your-redis-host:6379"
+  # tls: false            # [DEFAULT: false]
+  # connectTimeout: 5000  # [DEFAULT: not set]
 
 # Basic app configuration
 app:
@@ -25,6 +67,8 @@ app:
   replicas: 1
   service:
     port: 3000
+    # type: ClusterIP     # [DEFAULT: ClusterIP]
+  # nodeEnv: "production" # [DEFAULT: production]
 
 # Basic worker configuration
 worker:
@@ -33,8 +77,45 @@ worker:
   service:
     port: 3000
     type: ClusterIP
+  # nodeEnv: "production" # [DEFAULT: production]
 
 # Basic supervisor configuration
 supervisor:
   enabled: true
-  replicas: 1 
+  replicas: 1
+  # mode: "both"          # [DEFAULT: both]
+  # nodeEnv: "production" # [DEFAULT: production]
+  # service:
+  #   type: ClusterIP    # [DEFAULT: ClusterIP]
+  #   port: 8020        # [DEFAULT: 8020]
+
+# Production Features (using secure defaults)
+# networkPolicy:
+#   enabled: true         # [DEFAULT: true]
+
+# autoscaling:
+#   enabled: false        # [DEFAULT: false]
+#   minReplicas: 1       # [DEFAULT: 1]
+#   maxReplicas: 100     # [DEFAULT: 100]
+#   targetCPUUtilizationPercentage: 80    # [DEFAULT: 80]
+#   targetMemoryUtilizationPercentage: 80 # [DEFAULT: 80]
+
+# podDisruptionBudget:
+#   enabled: true        # [DEFAULT: true]
+#   minAvailable: 1      # [DEFAULT: 1]
+
+# RBAC Configuration (using secure defaults)
+# rbac:
+#   create: true         # [DEFAULT: true]
+#   rules:               # [DEFAULT: shown in complete template]
+
+# Service Account Configuration
+# serviceAccount:
+#   create: true        # [DEFAULT: true]
+#   name: ""            # [DEFAULT: ""]
+
+# Database Migration Configuration
+# dbMigration:
+#   enabled: true       # [DEFAULT: true]
+#   nodeEnv: "production" # [DEFAULT: production]
+#   resources:          # [DEFAULT: shown in complete template] 
