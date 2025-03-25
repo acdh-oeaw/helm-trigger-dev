@@ -36,6 +36,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-helm-
 
+      - name: Copy minimal values for linting
+        run: |
+          cp values.minimal.yaml.template values.yaml
+
       - name: Validate Chart.yaml
         run: |
           if [ ! -f Chart.yaml ]; then

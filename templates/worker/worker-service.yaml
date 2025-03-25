@@ -16,7 +16,7 @@ spec:
   type: {{ .Values.worker.service.type }}
   {{- end }}
   ports:
-    - port: {{ .Values.worker.service.port }}
+    - port: {{ .Values.worker.service.port | default 3000 }}
       targetPort: http
       protocol: TCP
       name: http
