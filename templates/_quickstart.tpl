@@ -3,7 +3,6 @@ Generate random secrets for quickstart mode
 */}}
 {{- define "trigger-dev.generateSecrets" -}}
 {{- if .Values.quickstart.enabled -}}
-# Auto-generated secure secrets (only used when quickstart.enabled=true)
 {{- if not (lookup "v1" "Secret" .Release.Namespace (printf "%s-secrets" (include "trigger-dev.fullname" .))) -}}
 apiVersion: v1
 kind: Secret
