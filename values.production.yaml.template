@@ -128,7 +128,7 @@ priorityClassName: "system-cluster-critical"
 topologySpreadConstraints:
   - maxSkew: 1
     topologyKey: topology.kubernetes.io/zone
-    whenUnsatisfied: ScheduleAnyway
+    whenUnsatisfiable: ScheduleAnyway
     labelSelector:
       matchLabels:
         app.kubernetes.io/name: {{ .Chart.Name }}
